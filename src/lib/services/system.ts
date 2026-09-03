@@ -77,6 +77,30 @@ export async function getDemoDayOffset(): Promise<number> {
   return Number.isFinite(v) ? Number(v) : 0;
 }
 
+const DEFAULT_MIN_WITHDRAWAL = 1000;
+const DEFAULT_WITHDRAWAL_FEE_PERCENT = 15;
+
+export async function getMinWithdrawal(): Promise<number> {
+  return getSetting<number>("min_withdrawal", DEFAULT_MIN_WITHDRAWAL);
+}
+export async function setMinWithdrawal(value: number): Promise<void> {
+  await setSetting("min_withdrawal", value);
+}
+
+export async function getWithdrawalFeePercent(): Promise<number> {
+  return getSetting<number>("withdrawal_fee_percent", DEFAULT_WITHDRAWAL_FEE_PERCENT);
+}
+export async function setWithdrawalFeePercent(value: number): Promise<void> {
+  await setSetting("withdrawal_fee_percent", value);
+}
+
+export async function isMaintenanceMode(): Promise<boolean> {
+  return getSetting<boolean>("maintenance_mode", false);
+}
+export async function setMaintenanceMode(value: boolean): Promise<void> {
+  await setSetting("maintenance_mode", value);
+}
+
 /* ------------------------------------------------------------------ */
 /* Page d'accueil (bannière) & liens Telegram – modifiables par l'admin */
 /* ------------------------------------------------------------------ */

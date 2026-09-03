@@ -1,8 +1,8 @@
-import { advanceDemoDayAction, runAccrualAction, saveHomeSettingsAction } from "@/lib/actions/admin";
+import { advanceDemoDayAction, runAccrualAction, saveHomeSettingsAction, saveFinanceSettingsAction } from "@/lib/actions/admin";
 import { DEMO_MODE } from "@/lib/config";
 import { getT } from "@/lib/i18n/server";
 import { getPaymentProvider } from "@/lib/services/payment";
-import { getDemoDayOffset, getHomeSettings } from "@/lib/services/system";
+import { getDemoDayOffset, getHomeSettings, getMinWithdrawal, getWithdrawalFeePercent, isMaintenanceMode } from "@/lib/services/system";
 import { Photo } from "@/components/photo";
 import { TelegramIcon } from "@/components/telegram-fab";
 import { ConfirmForm } from "@/components/client";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const { t } = await getT();
-  const [offset, { banner, telegram }] = await Promise.all([getDemoDayOffset(), getHomeSettings()]);
+  const [offset, { banner, telegram }, minWithdrawal, feePercent, maintenanceMode] = await Promise.all([getDemoDayOffset(), getHomeSettings(), getMinWithdrawal(), getWithdrawalFeePercent(), isMaintenanceMode()]);
   const provider = getPaymentProvider();
   return (
     <div className="max-w-2xl space-y-4">
@@ -26,6 +26,24 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           <p className="text-xs text-slate-500">{t("admin.settings.realModeNote")}</p>
         </CardBody>
       </Card>
+        <Card>
+          <CardBody className="space-y-4">
+            <h2 className="font-bold flex items-center gap-2"><Icon name="wallet" className="w-4 h-4 text-emerald-600" /> {t("admin.settings.finance")}</h2>
+            <form action={saveFinanceSettingsAction} className="space-y-3">
+              <Field label={t("admin.settings.minWithdrawal")} htmlFor="minWithdrawal">
+                <Input id="minWithdrawal" name="minWithdrawal" type="number" inputMode="numeric" min={0} step={1} defaultValue={minWithdrawal} required />
+              </Field>
+              <Field label={t("admin.settings.feePercent")} htmlFor="feePercent">
+                <Input id="feePercent" name="feePercent" type="number" inputMode="numeric" min={0} max={100} step={1} defaultValue={feePercent} required />
+              </Field>
+              <div className="flex items-center gap-2">
+                <input id="maintenanceMode" name="maintenanceMode" type="checkbox" defaultChecked={maintenanceMode} />
+                <label htmlFor="maintenanceMode" className="text-sm">{t("admin.settings.maintenanceMode")}</label>
+              </div>
+              <button className={buttonClass("primary", "md", "w-full sm:w-auto")}>{t("common.save")}</button>
+            </form>
+          </CardBody>
+        </Card>
       <Card>
         <CardBody className="space-y-4">
           <h2 className="font-bold flex items-center gap-2"><Icon name="home" className="w-4 h-4 text-emerald-600" /> {t("admin.settings.home")}</h2>

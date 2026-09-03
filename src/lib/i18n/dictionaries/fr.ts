@@ -372,6 +372,12 @@ export const fr = {
   "admin.settings.realModeNote":
     "Le mode réel s'active en définissant DEMO_MODE=false et en configurant le prestataire de paiement (clé API et secret webhook). Ne jamais exposer ces clés côté client.",
   "admin.settings.provider": "Prestataire de paiement",
+  "maintenance.title": "Site en maintenance",
+  "maintenance.message": "Nous effectuons une mise à jour. Merci de revenir dans quelques instants.",
+  "admin.settings.finance": "Réglages financiers",
+  "admin.settings.minWithdrawal": "Montant minimum de retrait",
+  "admin.settings.feePercent": "Frais de retrait (%)",
+  "admin.settings.maintenanceMode": "Mode maintenance",
   "admin.settings.mode": "Mode actuel",
   "admin.settings.demo": "Démo (simulé)",
   "admin.settings.real": "Réel",

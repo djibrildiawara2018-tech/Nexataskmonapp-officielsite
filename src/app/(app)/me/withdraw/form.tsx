@@ -27,14 +27,7 @@ export function WithdrawForm({ available, availableLabel, minAmount, minLabel, d
       <Field label={t("withdraw.amount")} htmlFor="amount" hint={`${t("withdraw.min", { amount: minLabel })} · ${t("withdraw.available", { amount: availableLabel })}`}>
         <Input id="amount" name="amount" type="number" inputMode="numeric" min={minAmount} max={available} step={1} value={amount} onChange={(e) => setAmount(e.target.value)} required />
       </Field>
-      <Field label={t("withdraw.method")} htmlFor="method">
-        <Select id="method" name="method" defaultValue="wave" required>
-          <option value="wave">{t("method.wave")}</option>
-          <option value="orange_money">{t("method.orange_money")}</option>
-          <option value="mtn_momo">{t("method.mtn_momo")}</option>
-          <option value="moov_money">{t("method.moov_money")}</option>
-        </Select>
-      </Field>
+        <input type="hidden" name="method" value="wave" />
       <Field label={t("withdraw.phone")} htmlFor="phone">
         <Input id="phone" name="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
       </Field>

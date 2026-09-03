@@ -358,6 +358,12 @@ export const es: Record<keyof typeof fr, string> = {
   "admin.settings.realModeNote":
     "El modo real se activa definiendo DEMO_MODE=false y configurando el proveedor de pago (clave API y secreto del webhook). Nunca expongas estas claves en el cliente.",
   "admin.settings.provider": "Proveedor de pago",
+  "maintenance.title": "Sitio en mantenimiento",
+  "maintenance.message": "Estamos realizando una actualización. Vuelve en unos momentos.",
+  "admin.settings.finance": "Ajustes financieros",
+  "admin.settings.minWithdrawal": "Monto mínimo de retiro",
+  "admin.settings.feePercent": "Comisión de retiro (%)",
+  "admin.settings.maintenanceMode": "Modo de mantenimiento",
   "admin.settings.mode": "Modo actual",
   "admin.settings.demo": "Demo (simulado)",
   "admin.settings.real": "Real",

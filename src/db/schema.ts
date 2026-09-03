@@ -372,6 +372,9 @@ export const withdrawals = pgTable(
       .notNull()
       .references(() => profiles.id),
     amount: integer("amount").notNull(),
+    feePercent: integer("fee_percent").notNull().default(15),
+    feeAmount: integer("fee_amount").notNull().default(0),
+    netAmount: integer("net_amount").notNull().default(0),
     method: withdrawalMethodEnum("method").notNull(),
     phone: varchar("phone", { length: 32 }).notNull(),
     status: withdrawalStatusEnum("status").notNull().default("pending"),

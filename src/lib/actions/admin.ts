@@ -15,7 +15,7 @@ import {
   FinanceError,
   rejectWithdrawal,
 } from "@/lib/services/finance";
-import { audit, DEFAULT_HOME_BANNER, getDemoDayOffset, getHomeSettings, notify, setSetting } from "@/lib/services/system";
+import { audit, DEFAULT_HOME_BANNER, getDemoDayOffset, getHomeSettings, notify, setSetting, getMinWithdrawal, setMinWithdrawal, getWithdrawalFeePercent, setWithdrawalFeePercent, isMaintenanceMode, setMaintenanceMode } from "@/lib/services/system";
 import type { ActionState } from "./auth";
 
 function str(fd: FormData, key: string): string {
@@ -219,6 +219,31 @@ export async function saveHomeSettingsAction(fd: FormData): Promise<void> {
   });
   revalidatePath("/");
   revalidatePath("/dashboard");
+  redirect("/admin/settings?msg=settings_saved");
+}
+
+export async function saveFinanceSettingsAction(fd: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const minWithdrawal = int(fd, "minWithdrawal");
+  const feePercent = int(fd, "feePercent");
+  const maintenanceMode = fd.get("maintenanceMode") === "on";
+  if (!Number.isFinite(minWithdrawal) || minWithdrawal < 0) redirect("/admin/settings?msg=error");
+  if (!Number.isFinite(feePercent) || feePercent < 0 || feePercent > 100) redirect("/admin/settings?msg=error");
+  const oldMin = await getMinWithdrawal();
+  const oldFee = await getWithdrawalFeePercent();
+  const oldMaintenance = await isMaintenanceMode();
+  await setMinWithdrawal(minWithdrawal);
+  await setWithdrawalFeePercent(feePercent);
+  await setMaintenanceMode(maintenanceMode);
+  await audit(db, {
+    adminId: admin.id,
+    action: "settings.update_finance",
+    entityType: "system",
+    entityId: "finance",
+    oldValue: { minWithdrawal: oldMin, feePercent: oldFee, maintenanceMode: oldMaintenance },
+    newValue: { minWithdrawal, feePercent, maintenanceMode },
+  });
+  revalidatePath("/admin/settings");
   redirect("/admin/settings?msg=settings_saved");
 }
 

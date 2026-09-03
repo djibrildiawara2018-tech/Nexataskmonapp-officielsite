@@ -13,9 +13,9 @@ import {
   userBalances,
   withdrawals,
 } from "@/db/schema";
-import { DEMO_MODE, MIN_WITHDRAWAL, REFERRAL_RATES } from "@/lib/config";
+import { DEMO_MODE, REFERRAL_RATES } from "@/lib/config";
 import { generatePaymentReference, getPaymentProvider } from "./payment";
-import { audit, getDemoDayOffset, notify } from "./system";
+import { audit, getDemoDayOffset, notify, getMinWithdrawal, getWithdrawalFeePercent } from "./system";
 
 /* ------------------------------------------------------------------ */
 /* Erreurs métier (code = clé i18n)                                    */
@@ -470,11 +470,15 @@ export async function requestWithdrawal(
   input: { amount: number; method: WithdrawalMethod; phone: string },
 ) {
   if (!Number.isInteger(input.amount) || input.amount <= 0) throw new FinanceError("withdraw.err.invalidAmount");
-  if (input.amount < MIN_WITHDRAWAL) throw new FinanceError("withdraw.err.min");
+  const minWithdrawal = await getMinWithdrawal();
+  if (input.amount < minWithdrawal) throw new FinanceError("withdraw.err.min");
+  const feePercent = await getWithdrawalFeePercent();
+  const feeAmount = Math.floor((input.amount * feePercent) / 100);
+  const netAmount = input.amount - feeAmount;
   return db.transaction(async (tx) => {
     const [w] = await tx
       .insert(withdrawals)
-      .values({ userId, amount: input.amount, method: input.method, phone: input.phone, isDemo: DEMO_MODE })
+      .values({ userId, amount: input.amount, feePercent, feeAmount, netAmount, method: input.method, phone: input.phone, isDemo: DEMO_MODE })
       .returning();
     await applyLedger(tx, {
       userId,
@@ -491,13 +495,12 @@ export async function requestWithdrawal(
       userId,
       type: "withdrawal_requested",
       title: "Retrait demandé",
-      body: `Votre demande de retrait de ${input.amount} FCFA est en attente de validation.`,
-      data: { amount: input.amount, withdrawalId: w.id },
+      body: `Votre demande de ${input.amount} FCFA est en attente. Après ${feePercent}% de frais, vous recevrez ${netAmount} FCFA.`,
+      data: { amount: input.amount, feeAmount, netAmount, withdrawalId: w.id },
     });
     return w;
   });
 }
-
 export async function approveWithdrawal(adminId: string, id: string, note?: string) {
   return db.transaction(async (tx) => {
     const [w] = await tx
@@ -573,7 +576,7 @@ export async function completeWithdrawal(adminId: string, id: string) {
     if (provider.isDemo) {
       providerReference = (await provider.payout({
         withdrawalId: id,
-        amount: current.amount,
+        amount: current.netAmount,
         currency: "XOF",
         phone: current.phone,
         method: current.method,
@@ -589,13 +592,13 @@ export async function completeWithdrawal(adminId: string, id: string) {
     await applyLedger(tx, {
       userId: w.userId,
       type: "withdrawal_paid",
-      amount: w.amount,
+      amount: w.netAmount,
       effect: "none",
       idempotencyKey: `withdrawal_paid:${w.id}`,
       referenceType: "withdrawal",
       referenceId: w.id,
       description: `${w.method} ${w.phone}`,
-      counters: { pendingWithdrawal: -w.amount, totalWithdrawn: w.amount },
+      counters: { pendingWithdrawal: -w.amount, totalWithdrawn: w.netAmount },
     });
     await audit(tx, {
       adminId,
