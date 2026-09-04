@@ -5,7 +5,7 @@ import { getPaymentProvider } from "@/lib/services/payment";
 import { getDemoDayOffset, getHomeSettings, getMinWithdrawal, getWithdrawalFeePercent, isMaintenanceMode } from "@/lib/services/system";
 import { Photo } from "@/components/photo";
 import { TelegramIcon } from "@/components/telegram-fab";
-import { ConfirmForm } from "@/components/client";
+import { ConfirmForm, ImageUploader } from "@/components/client";
 import { Alert, Badge, Card, CardBody, Field, Icon, Input, PageHeader, Textarea, buttonClass } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
@@ -57,9 +57,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             </div>
           </div>
           <form action={saveHomeSettingsAction} className="space-y-4">
-            <Field label={t("admin.settings.bannerImage")} htmlFor="bannerImageUrl">
-              <Input id="bannerImageUrl" name="bannerImageUrl" defaultValue={banner.imageUrl} placeholder="/images/home-banner.jpg" />
-            </Field>
+            <ImageUploader name="bannerImageUrl" defaultValue={banner.imageUrl} label={t("admin.settings.bannerImage")} />
             <Field label={t("admin.settings.bannerTitle")} htmlFor="bannerTitle">
               <Input id="bannerTitle" name="bannerTitle" defaultValue={banner.title} maxLength={80} placeholder={t("home.banner.title")} />
             </Field>

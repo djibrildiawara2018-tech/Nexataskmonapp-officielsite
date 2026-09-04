@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { saveProductAction } from "@/lib/actions/admin";
 import type { ActionState } from "@/lib/actions/auth";
 import { useI18n } from "@/lib/i18n/client";
-import { ActionAlert, SubmitButton } from "@/components/client";
+import { ActionAlert, ImageUploader, SubmitButton } from "@/components/client";
 import { Card, CardBody, Field, Input, Textarea } from "@/components/ui";
 
 export type ProductFormValues = {
@@ -37,11 +37,7 @@ export function ProductForm({ product }: { product?: ProductFormValues }) {
             <Field label={t("admin.products.duration")} htmlFor="durationDays"><Input id="durationDays" name="durationDays" type="number" inputMode="numeric" min={1} step={1} defaultValue={product?.durationDays ?? 180} required /></Field>
             <Field label={t("admin.products.sortOrder")} htmlFor="sortOrder"><Input id="sortOrder" name="sortOrder" type="number" inputMode="numeric" step={1} defaultValue={product?.sortOrder ?? 0} /></Field>
           </div>
-          <Field label={t("admin.products.imageUrl")} htmlFor="imageUrl"><Input id="imageUrl" name="imageUrl" type="url" defaultValue={product?.imageUrl ?? ""} placeholder="https://…" /></Field>
-          {product?.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.imageUrl} alt="" className="h-24 rounded-xl object-cover" />
-          )}
+          <ImageUploader name="imageUrl" defaultValue={product?.imageUrl} label={t("admin.products.imageUrl")} />
           <Field label={t("common.description")} htmlFor="description"><Textarea id="description" name="description" defaultValue={product?.description ?? ""} /></Field>
           <label className="flex items-center gap-2 text-sm font-medium">
             <input type="checkbox" name="isActive" defaultChecked={product?.isActive ?? true} className="w-4 h-4 accent-emerald-600" /> {t("admin.products.active")}

@@ -346,3 +346,56 @@ export function AutoRefresh({ intervalMs = 5000, enabled }: { intervalMs?: numbe
   }, [enabled, intervalMs, router]);
   return null;
 }
+
+export function ImageUploader({
+  name,
+  defaultValue,
+  label,
+}: {
+  name: string;
+  defaultValue?: string | null;
+  label?: string;
+}) {
+  const [url, setUrl] = useState(defaultValue ?? "");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Échec de l'upload");
+      setUrl(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {label && <p className="text-sm font-medium">{label}</p>}
+      <input type="hidden" name={name} value={url} />
+      {url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt="" className="h-24 rounded-xl object-cover" />
+      )}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFile}
+        disabled={uploading}
+        className="text-sm"
+      />
+      {uploading && <p className="text-xs text-slate-500">Envoi en cours...</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
