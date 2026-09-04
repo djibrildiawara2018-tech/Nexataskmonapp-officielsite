@@ -28,7 +28,11 @@ export function WithdrawForm({ available, availableLabel, minAmount, minLabel, d
         <Input id="amount" name="amount" type="number" inputMode="numeric" min={minAmount} max={available} step={1} value={amount} onChange={(e) => setAmount(e.target.value)} required />
       </Field>
         <input type="hidden" name="method" value="wave" />
-      <Field label={t("withdraw.phone")} htmlFor="phone">
+      <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">W</span>
+        Retrait via Wave
+      </div>
+      <Field label="Numéro Wave" htmlFor="phone" hint="Le retrait sera envoyé sur ce numéro Wave">
         <Input id="phone" name="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
       </Field>
       <SubmitButton size="lg" className="w-full" disabled={!canSubmit}>
