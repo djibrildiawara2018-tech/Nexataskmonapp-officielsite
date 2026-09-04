@@ -88,6 +88,8 @@ export function ConfirmForm({
       )}
     </>
   );
+}
+
 /* ------------------------------ Messages traduits ------------------------------ */
 export function T({ k, params }: { k: DictKey | string; params?: Record<string, string | number> }) {
   const { t } = useI18n();
