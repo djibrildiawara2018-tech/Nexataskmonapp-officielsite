@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { requireAdmin } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export async function POST(req: NextRequest) {
-  await requireAdmin();
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin" || user.status !== "active") {
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  }
 
   const form = await req.formData();
   const file = form.get("file") as File | null;
