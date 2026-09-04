@@ -88,22 +88,6 @@ export function ConfirmForm({
       )}
     </>
   );
-}: {
-  action: (fd: FormData) => void | Promise<void>;
-  confirmMessage: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    if (!window.confirm(confirmMessage)) e.preventDefault();
-  };
-  return (
-    <form action={action} onSubmit={onSubmit} className={className}>
-      {children}
-    </form>
-  );
-}
-
 /* ------------------------------ Messages traduits ------------------------------ */
 export function T({ k, params }: { k: DictKey | string; params?: Record<string, string | number> }) {
   const { t } = useI18n();
