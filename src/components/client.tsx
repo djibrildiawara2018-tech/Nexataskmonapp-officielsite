@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { setLocaleAction } from "@/lib/actions/auth";
 import { localeLabels, locales } from "@/lib/i18n/config";
@@ -33,6 +33,61 @@ export function ConfirmForm({
   confirmMessage,
   children,
   className,
+}: {
+  action: (fd: FormData) => void | Promise<void>;
+  confirmMessage: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const confirmedRef = useRef(false);
+
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    if (confirmedRef.current) {
+      confirmedRef.current = false;
+      return;
+    }
+    e.preventDefault();
+    setOpen(true);
+  };
+
+  const confirmAndSubmit = () => {
+    confirmedRef.current = true;
+    setOpen(false);
+    formRef.current?.requestSubmit();
+  };
+
+  return (
+    <>
+      <form ref={formRef} action={action} onSubmit={onSubmit} className={className}>
+        {children}
+      </form>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <p className="text-sm font-medium text-slate-800">{confirmMessage}</p>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmAndSubmit}
+                className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }: {
   action: (fd: FormData) => void | Promise<void>;
   confirmMessage: string;
@@ -392,7 +447,7 @@ export function ImageUploader({
         accept="image/*"
         onChange={handleFile}
         disabled={uploading}
-        className="text-sm"
+        className="text-sm file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-emerald-700 disabled:opacity-60"
       />
       {uploading && <p className="text-xs text-slate-500">Envoi en cours...</p>}
       {error && <p className="text-xs text-red-600">{error}</p>}
