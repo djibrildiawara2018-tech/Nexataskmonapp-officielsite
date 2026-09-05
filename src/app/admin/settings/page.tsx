@@ -1,4 +1,4 @@
-import { advanceDemoDayAction, runAccrualAction, saveHomeSettingsAction, saveFinanceSettingsAction, addDepositAccountAction, toggleDepositAccountAction, deleteDepositAccountAction } from "@/lib/actions/admin";
+import { advanceDemoDayAction, runAccrualAction, saveHomeSettingsAction, saveFinanceSettingsAction, addDepositAccountAction, toggleDepositAccountAction, deleteDepositAccountAction, updateDepositAccountAction } from "@/lib/actions/admin";
 import { DEMO_MODE } from "@/lib/config";
 import { getT } from "@/lib/i18n/server";
 import { getPaymentProvider } from "@/lib/services/payment";
@@ -55,23 +55,34 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
           </p>
           <ul className="divide-y divide-slate-100">
             {depositAccounts.map((a) => (
-              <li key={a.id} className="flex items-center justify-between gap-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm truncate">{a.label}</p>
-                  <p className="text-xs text-slate-500">{a.phone} · {a.paymentsReceived} paiement(s) reçu(s)</p>
+              <li key={a.id} className="py-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm truncate">{a.label}</p>
+                    <p className="text-xs text-slate-500">{a.phone} · {a.paymentsReceived} paiement(s) reçu(s)</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge tone={a.isActive ? "emerald" : "amber"}>{a.isActive ? "Actif" : "Inactif"}</Badge>
+                    <form action={toggleDepositAccountAction}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <input type="hidden" name="isActive" value={String(!a.isActive)} />
+                      <button className={buttonClass("secondary", "sm")}>{a.isActive ? "Désactiver" : "Activer"}</button>
+                    </form>
+                    <ConfirmForm action={deleteDepositAccountAction} confirmMessage={`Supprimer le numéro ${a.phone} ?`}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <button className={buttonClass("ghost", "sm", "!text-rose-600")}>Supprimer</button>
+                    </ConfirmForm>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Badge tone={a.isActive ? "emerald" : "amber"}>{a.isActive ? "Actif" : "Inactif"}</Badge>
-                  <form action={toggleDepositAccountAction}>
+                <details className="mt-2">
+                  <summary className="text-xs font-medium text-emerald-700 cursor-pointer">Modifier</summary>
+                  <form action={updateDepositAccountAction} className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                     <input type="hidden" name="id" value={a.id} />
-                    <input type="hidden" name="isActive" value={String(!a.isActive)} />
-                    <button className={buttonClass("secondary", "sm")}>{a.isActive ? "Désactiver" : "Activer"}</button>
+                    <Input name="label" defaultValue={a.label} placeholder="Nom du numéro" required />
+                    <Input name="phone" type="tel" defaultValue={a.phone} placeholder="Numéro Wave" required />
+                    <button className={buttonClass("primary", "sm", "sm:col-span-2")}>Enregistrer les modifications</button>
                   </form>
-                  <ConfirmForm action={deleteDepositAccountAction} confirmMessage={`Supprimer le numéro ${a.phone} ?`}>
-                    <input type="hidden" name="id" value={a.id} />
-                    <button className={buttonClass("ghost", "sm", "!text-rose-600")}>Supprimer</button>
-                  </ConfirmForm>
-                </div>
+                </details>
               </li>
             ))}
             {depositAccounts.length === 0 && <p className="text-sm text-slate-500 py-2">Aucun numéro configuré pour le moment.</p>}

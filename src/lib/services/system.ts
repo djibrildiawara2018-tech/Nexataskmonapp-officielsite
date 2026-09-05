@@ -120,6 +120,13 @@ export async function setDepositAccountActive(id: string, isActive: boolean): Pr
   await db.update(depositAccounts).set({ isActive, updatedAt: new Date() }).where(eq(depositAccounts.id, id));
 }
 
+export async function updateDepositAccount(id: string, input: { label: string; phone: string }): Promise<void> {
+  await db
+    .update(depositAccounts)
+    .set({ label: input.label, phone: input.phone, updatedAt: new Date() })
+    .where(eq(depositAccounts.id, id));
+}
+
 export async function deleteDepositAccount(id: string): Promise<void> {
   await db.delete(depositAccounts).where(eq(depositAccounts.id, id));
 }
