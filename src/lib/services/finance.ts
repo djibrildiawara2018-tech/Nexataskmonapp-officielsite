@@ -278,6 +278,42 @@ export async function confirmPayment(
       data: { product: order.productName, days: order.durationDays, orderId: order.id },
     });
 
+    // Bonus jour 1 crédité immédiatement à la confirmation du paiement.
+    const firstBonusDate = new Date(startedAt.getTime() + 1 * DAY_MS).toISOString().slice(0, 10);
+    const insertedFirstBonus = await tx
+      .insert(bonusTransactions)
+      .values({ userId: order.userId, orderId: order.id, amount: order.dailyBonus, bonusDate: firstBonusDate, dayNumber: 1 })
+      .onConflictDoNothing()
+      .returning({ id: bonusTransactions.id });
+    if (insertedFirstBonus.length > 0) {
+      await applyLedger(tx, {
+        userId: order.userId,
+        type: "bonus",
+        amount: order.dailyBonus,
+        effect: "credit",
+        idempotencyKey: `bonus:${order.id}:1`,
+        referenceType: "bonus",
+        referenceId: insertedFirstBonus[0].id,
+        description: `${order.productName} — jour 1/${order.durationDays}`,
+        counters: { totalBonus: order.dailyBonus },
+      });
+      await tx
+        .update(orders)
+        .set({
+          bonusDaysPaid: sql`GREATEST(${orders.bonusDaysPaid}, 1)`,
+          totalBonusPaid: sql`${orders.totalBonusPaid} + ${order.dailyBonus}`,
+          updatedAt: now,
+        })
+        .where(eq(orders.id, order.id));
+      await notify(tx, {
+        userId: order.userId,
+        type: "bonus_credited",
+        title: "Bonus reçu",
+        body: `Vous avez reçu ${order.dailyBonus} FCFA de bonus pour ${order.productName}.`,
+        data: { amount: order.dailyBonus, orderId: order.id, day: 1 },
+      });
+    }
+
     await distributeCommissions(tx, payment, order);
     if (opts.source === "admin" && opts.actorId) {
       await audit(tx, {
