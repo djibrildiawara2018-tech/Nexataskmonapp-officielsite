@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/session";
-import { DEMO_MODE, MIN_WITHDRAWAL } from "@/lib/config";
+import { DEMO_MODE } from "@/lib/config";
 import { formatDateTime, formatMoney } from "@/lib/i18n/config";
 import { getT } from "@/lib/i18n/server";
 import { getBalance, getWithdrawals, pageOf } from "@/lib/queries/user";
+import { getMinWithdrawal } from "@/lib/services/system";
 import { StatusBadge } from "@/components/client";
 import { Alert, Card, CardBody, EmptyState, Icon, Pagination, SectionTitle } from "@/components/ui";
 import { WithdrawForm } from "./form";
@@ -15,7 +16,7 @@ export default async function WithdrawPage({ searchParams }: { searchParams: Pro
   const user = await requireUser();
   const sp = await searchParams;
   const { t, locale } = await getT();
-  const [balance, list] = await Promise.all([getBalance(user.id), getWithdrawals(user.id, pageOf(sp.page))]);
+  const [balance, list, minWithdrawal] = await Promise.all([getBalance(user.id), getWithdrawals(user.id, pageOf(sp.page)), getMinWithdrawal()]);
   const money = (n: number) => formatMoney(n, locale);
   return (
     <div className="max-w-lg mx-auto space-y-4">
@@ -33,7 +34,7 @@ export default async function WithdrawPage({ searchParams }: { searchParams: Pro
             <span className="text-sm text-emerald-800">{t("dash.availableBalance")}</span>
             <span className="font-extrabold text-emerald-900 tabular-nums">{money(balance.available)}</span>
           </div>
-          <WithdrawForm available={balance.available} availableLabel={money(balance.available)} minAmount={MIN_WITHDRAWAL} minLabel={money(MIN_WITHDRAWAL)} wavePhone={user.wavePhone} />
+          <WithdrawForm available={balance.available} availableLabel={money(balance.available)} minAmount={minWithdrawal} minLabel={money(minWithdrawal)} wavePhone={user.wavePhone} />
           <p className="text-xs text-slate-500 mt-3">{t("withdraw.note")}</p>
         </CardBody>
       </Card>
