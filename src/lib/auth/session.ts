@@ -79,6 +79,7 @@ export type SessionUser = {
   firstName: string;
   lastName: string;
   phone: string;
+  wavePhone: string | null;
   referralCode: string;
   referredBy: string | null;
   role: string;
@@ -99,6 +100,7 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
       firstName: profiles.firstName,
       lastName: profiles.lastName,
       phone: profiles.phone,
+      wavePhone: profiles.wavePhone,
       referralCode: profiles.referralCode,
       referredBy: profiles.referredBy,
       role: profiles.role,

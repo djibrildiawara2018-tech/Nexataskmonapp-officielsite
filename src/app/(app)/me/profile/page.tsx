@@ -14,7 +14,7 @@ export default async function ProfilePage() {
       <Link href="/me" className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700">
         <Icon name="arrowLeft" className="w-4 h-4" /> {t("me.title")}
       </Link>
-      <ProfileForms user={{ firstName: user.firstName, lastName: user.lastName, phone: user.phone, email: user.email }} />
+      <ProfileForms user={{ firstName: user.firstName, lastName: user.lastName, phone: user.phone, email: user.email, wavePhone: user.wavePhone }} />
     </div>
   );
 }

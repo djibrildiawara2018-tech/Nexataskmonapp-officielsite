@@ -93,6 +93,7 @@ export const profiles = pgTable(
     firstName: varchar("first_name", { length: 80 }).notNull(),
     lastName: varchar("last_name", { length: 80 }).notNull(),
     phone: varchar("phone", { length: 32 }).notNull(),
+    wavePhone: varchar("wave_phone", { length: 32 }),
     referralCode: varchar("referral_code", { length: 16 }).notNull(),
     referredBy: uuid("referred_by"),
     role: varchar("role", { length: 32 })

@@ -6,7 +6,7 @@ import { useI18n } from "@/lib/i18n/client";
 import { ActionAlert, SubmitButton } from "@/components/client";
 import { Card, CardBody, Field, Input } from "@/components/ui";
 
-export function ProfileForms({ user }: { user: { firstName: string; lastName: string; phone: string; email: string } }) {
+export function ProfileForms({ user }: { user: { firstName: string; lastName: string; phone: string; email: string; wavePhone: string | null } }) {
   const { t } = useI18n();
   const [pState, pAction] = useActionState<ActionState, FormData>(updateProfileAction, null);
   const [sState, sAction] = useActionState<ActionState, FormData>(changePasswordAction, null);
@@ -27,6 +27,9 @@ export function ProfileForms({ user }: { user: { firstName: string; lastName: st
             </div>
             <Field label={t("auth.phone")} htmlFor="phone">
               <Input id="phone" name="phone" type="tel" defaultValue={user.phone} required />
+            </Field>
+            <Field label="Numéro Wave (retrait)" htmlFor="wavePhone" hint="Utilisé pour recevoir vos retraits">
+              <Input id="wavePhone" name="wavePhone" type="tel" defaultValue={user.wavePhone ?? ""} placeholder="+2250102030405" />
             </Field>
             <Field label={t("auth.email")} htmlFor="email">
               <Input id="email" value={user.email} disabled readOnly />

@@ -227,12 +227,15 @@ export async function updateProfileAction(_prev: ActionState, fd: FormData): Pro
   const firstName = str(fd, "firstName");
   const lastName = str(fd, "lastName");
   const phone = str(fd, "phone");
+  const wavePhoneRaw = str(fd, "wavePhone");
   if (!firstName || !lastName || !phone) return { error: "auth.err.required" };
   if (!PHONE_RE.test(normPhone(phone))) return { error: "auth.err.phoneInvalid" };
+  if (wavePhoneRaw && !PHONE_RE.test(normPhone(wavePhoneRaw))) return { error: "auth.err.phoneInvalid" };
+  const wavePhone = wavePhoneRaw || null;
   // Champs sensibles (role, status, referredBy, solde) volontairement non modifiables ici.
   await db
     .update(profiles)
-    .set({ firstName, lastName, phone, updatedAt: new Date() })
+    .set({ firstName, lastName, phone, wavePhone, updatedAt: new Date() })
     .where(eq(profiles.id, user.id));
   return { success: "flash.profile_updated" };
 }
