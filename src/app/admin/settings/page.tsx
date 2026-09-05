@@ -1,8 +1,8 @@
-import { advanceDemoDayAction, runAccrualAction, saveHomeSettingsAction, saveFinanceSettingsAction } from "@/lib/actions/admin";
+import { advanceDemoDayAction, runAccrualAction, saveHomeSettingsAction, saveFinanceSettingsAction, addDepositAccountAction, toggleDepositAccountAction, deleteDepositAccountAction } from "@/lib/actions/admin";
 import { DEMO_MODE } from "@/lib/config";
 import { getT } from "@/lib/i18n/server";
 import { getPaymentProvider } from "@/lib/services/payment";
-import { getDemoDayOffset, getHomeSettings, getMinWithdrawal, getWithdrawalFeePercent, isMaintenanceMode } from "@/lib/services/system";
+import { getDemoDayOffset, getHomeSettings, getMinWithdrawal, getWithdrawalFeePercent, isMaintenanceMode, listDepositAccounts, MIN_DEPOSIT_ACCOUNTS } from "@/lib/services/system";
 import { Photo } from "@/components/photo";
 import { TelegramIcon } from "@/components/telegram-fab";
 import { ConfirmForm, ImageUploader } from "@/components/client";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminSettingsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const { t } = await getT();
-  const [offset, { banner, telegram }, minWithdrawal, feePercent, maintenanceMode] = await Promise.all([getDemoDayOffset(), getHomeSettings(), getMinWithdrawal(), getWithdrawalFeePercent(), isMaintenanceMode()]);
+  const [offset, { banner, telegram }, minWithdrawal, feePercent, maintenanceMode, depositAccounts] = await Promise.all([getDemoDayOffset(), getHomeSettings(), getMinWithdrawal(), getWithdrawalFeePercent(), isMaintenanceMode(), listDepositAccounts()]);
   const provider = getPaymentProvider();
   return (
     <div className="max-w-2xl space-y-4">
@@ -44,6 +44,49 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             </form>
           </CardBody>
         </Card>
+      <Card>
+        <CardBody className="space-y-4">
+          <h2 className="font-bold flex items-center gap-2"><Icon name="wallet" className="w-4 h-4 text-emerald-600" /> Numéros de dépôt (paiement manuel)</h2>
+          <p className="text-xs text-slate-500">
+            Les paiements réels sont répartis automatiquement entre ces numéros, en priorisant celui ayant reçu le moins de paiements.
+            {depositAccounts.filter((a) => a.isActive).length < MIN_DEPOSIT_ACCOUNTS && (
+              <span className="text-amber-700 font-medium"> Minimum recommandé : {MIN_DEPOSIT_ACCOUNTS} numéros actifs.</span>
+            )}
+          </p>
+          <ul className="divide-y divide-slate-100">
+            {depositAccounts.map((a) => (
+              <li key={a.id} className="flex items-center justify-between gap-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm truncate">{a.label}</p>
+                  <p className="text-xs text-slate-500">{a.phone} · {a.paymentsReceived} paiement(s) reçu(s)</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge tone={a.isActive ? "emerald" : "amber"}>{a.isActive ? "Actif" : "Inactif"}</Badge>
+                  <form action={toggleDepositAccountAction}>
+                    <input type="hidden" name="id" value={a.id} />
+                    <input type="hidden" name="isActive" value={String(!a.isActive)} />
+                    <button className={buttonClass("secondary", "sm")}>{a.isActive ? "Désactiver" : "Activer"}</button>
+                  </form>
+                  <ConfirmForm action={deleteDepositAccountAction} confirmMessage={`Supprimer le numéro ${a.phone} ?`}>
+                    <input type="hidden" name="id" value={a.id} />
+                    <button className={buttonClass("ghost", "sm", "!text-rose-600")}>Supprimer</button>
+                  </ConfirmForm>
+                </div>
+              </li>
+            ))}
+            {depositAccounts.length === 0 && <p className="text-sm text-slate-500 py-2">Aucun numéro configuré pour le moment.</p>}
+          </ul>
+          <form action={addDepositAccountAction} className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+            <Field label="Nom du numéro" htmlFor="label">
+              <Input id="label" name="label" placeholder="Wave Compte 1" required />
+            </Field>
+            <Field label="Numéro Wave" htmlFor="phone">
+              <Input id="phone" name="phone" type="tel" placeholder="+2250102030405" required />
+            </Field>
+            <button className={buttonClass("primary", "md", "sm:col-span-2")}>Ajouter le numéro</button>
+          </form>
+        </CardBody>
+      </Card>
       <Card>
         <CardBody className="space-y-4">
           <h2 className="font-bold flex items-center gap-2"><Icon name="home" className="w-4 h-4 text-emerald-600" /> {t("admin.settings.home")}</h2>

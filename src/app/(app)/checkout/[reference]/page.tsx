@@ -86,6 +86,29 @@ export default async function CheckoutPage({ params }: { params: Promise<{ refer
         <>
           {DEMO_MODE ? (
             <DemoPaymentPanel reference={payment.reference} amountLabel={money(payment.amount)} />
+          ) : provider.name === "manual" ? (
+            <Card className="border-emerald-200">
+              <CardBody className="space-y-3">
+                <p className="text-sm text-slate-600 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> {t("checkout.awaiting")}
+                </p>
+                {(() => {
+                  const meta = payment.metadata as { depositAccount?: { label: string; phone: string } } | null;
+                  const account = meta?.depositAccount;
+                  if (!account) {
+                    return <p className="text-sm text-rose-600">Aucun numéro de dépôt disponible. Contactez le support.</p>;
+                  }
+                  return (
+                    <div className="rounded-xl bg-emerald-50 p-4 space-y-1">
+                      <p className="text-xs text-emerald-700">Envoyez {money(payment.amount)} via Wave à :</p>
+                      <p className="text-lg font-extrabold text-emerald-900">{account.phone}</p>
+                      <p className="text-xs text-emerald-700">{account.label}</p>
+                    </div>
+                  );
+                })()}
+                <p className="text-xs text-slate-500">Une fois le paiement effectué, notre équipe confirmera votre commande sous peu.</p>
+              </CardBody>
+            </Card>
           ) : (
             <Card>
               <CardBody className="space-y-3">

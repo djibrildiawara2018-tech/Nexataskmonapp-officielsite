@@ -15,7 +15,7 @@ import {
   FinanceError,
   rejectWithdrawal,
 } from "@/lib/services/finance";
-import { audit, DEFAULT_HOME_BANNER, getDemoDayOffset, getHomeSettings, notify, setSetting, getMinWithdrawal, setMinWithdrawal, getWithdrawalFeePercent, setWithdrawalFeePercent, isMaintenanceMode, setMaintenanceMode } from "@/lib/services/system";
+import { audit, DEFAULT_HOME_BANNER, getDemoDayOffset, getHomeSettings, notify, setSetting, getMinWithdrawal, setMinWithdrawal, getWithdrawalFeePercent, setWithdrawalFeePercent, isMaintenanceMode, setMaintenanceMode, addDepositAccount, deleteDepositAccount, setDepositAccountActive } from "@/lib/services/system";
 import type { ActionState } from "./auth";
 
 function str(fd: FormData, key: string): string {
@@ -175,6 +175,39 @@ export async function adminConfirmPaymentAction(fd: FormData): Promise<void> {
     redirect("/admin/payments?msg=error");
   }
   redirect("/admin/payments?msg=payment_confirmed");
+}
+
+/* ------------------------------ Numéros de dépôt (paiements manuels) ------------------------------ */
+export async function addDepositAccountAction(fd: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const label = String(fd.get("label") ?? "").trim();
+  const phone = String(fd.get("phone") ?? "").trim();
+  if (label && phone) {
+    await addDepositAccount({ label, phone });
+    await audit(db, { adminId: admin.id, action: "deposit_account.create", entityType: "deposit_account", newValue: { label, phone } });
+  }
+  revalidatePath("/admin/settings");
+}
+
+export async function toggleDepositAccountAction(fd: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const id = String(fd.get("id") ?? "");
+  const isActive = fd.get("isActive") === "true";
+  if (id) {
+    await setDepositAccountActive(id, isActive);
+    await audit(db, { adminId: admin.id, action: "deposit_account.toggle", entityType: "deposit_account", entityId: id, newValue: { isActive } });
+  }
+  revalidatePath("/admin/settings");
+}
+
+export async function deleteDepositAccountAction(fd: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const id = String(fd.get("id") ?? "");
+  if (id) {
+    await deleteDepositAccount(id);
+    await audit(db, { adminId: admin.id, action: "deposit_account.delete", entityType: "deposit_account", entityId: id });
+  }
+  revalidatePath("/admin/settings");
 }
 
 /* ------------------------------ Page d'accueil & Telegram ------------------------------ */

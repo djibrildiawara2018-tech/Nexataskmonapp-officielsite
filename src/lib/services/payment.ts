@@ -11,7 +11,7 @@ import { DEMO_MODE, appUrl } from "@/lib/config";
 /* confirmation arrive côté serveur (webhook signé ou vérification API). */
 /* ------------------------------------------------------------------ */
 
-export type ProviderName = "demo" | "wave";
+export type ProviderName = "demo" | "wave" | "manual";
 
 export type InitiatePaymentInput = {
   reference: string;
@@ -26,6 +26,8 @@ export type InitiatePaymentResult = {
   /** URL vers laquelle rediriger l'utilisateur (mode réel). */
   checkoutUrl?: string;
   providerReference?: string;
+  /** Mode manuel : numéro de dépôt assigné à afficher à l'utilisateur. */
+  depositAccount?: { id: string; label: string; phone: string };
 };
 
 export type PayoutInput = {
@@ -158,11 +160,44 @@ class WaveProvider implements PaymentProvider {
   }
 }
 
+/* ---------------- Fournisseur MANUEL (numéros de dépôt personnels) ---------------- */
+/**
+ * Aucune API externe : l'utilisateur envoie manuellement le montant vers un
+ * numéro de dépôt (Wave personnel) choisi par répartition équilibrée, puis
+ * un administrateur confirme le paiement après vérification (voir adminConfirmPaymentAction).
+ */
+class ManualProvider implements PaymentProvider {
+  readonly name = "manual" as const;
+  readonly isDemo = false;
+
+  async initiate(input: InitiatePaymentInput): Promise<InitiatePaymentResult> {
+    const { pickDepositAccount } = await import("./system");
+    const account = await pickDepositAccount();
+    if (!account) throw new Error("Aucun numéro de dépôt actif configuré");
+    return {
+      checkoutUrl: appUrl(`/checkout/${input.reference}`),
+      providerReference: `MANUAL-${account.id.slice(0, 8)}`,
+      depositAccount: { id: account.id, label: account.label, phone: account.phone },
+    };
+  }
+  async verify(): Promise<"paid" | "pending" | "failed"> {
+    // La confirmation est manuelle (admin), pas de vérification API.
+    return "pending";
+  }
+  async payout(): Promise<{ providerReference: string }> {
+    throw new Error("Le paiement sortant manuel doit être traité depuis /admin/withdrawals.");
+  }
+  parseWebhook(rawBody: string): WebhookEvent {
+    return { kind: "ignored", raw: rawBody };
+  }
+}
+
 /* ---------------- Sélection du fournisseur ---------------- */
 export function getPaymentProvider(): PaymentProvider {
   if (DEMO_MODE) return new DemoProvider();
   const name = (process.env.PAYMENT_PROVIDER ?? "demo") as ProviderName;
   if (name === "wave") return new WaveProvider();
+  if (name === "manual") return new ManualProvider();
   return new DemoProvider();
 }
 

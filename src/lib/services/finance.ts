@@ -202,13 +202,17 @@ export async function createOrderWithPayment(userId: string, productId: string, 
     phone,
     description: product.name,
   });
-  if (init.providerReference) {
+  if (init.providerReference || init.depositAccount) {
     await db
       .update(paymentTransactions)
-      .set({ providerReference: init.providerReference, updatedAt: new Date() })
+      .set({
+        providerReference: init.providerReference,
+        metadata: init.depositAccount ? { depositAccount: init.depositAccount } : undefined,
+        updatedAt: new Date(),
+      })
       .where(eq(paymentTransactions.id, result.payment.id));
   }
-  return { payment: result.payment, order: result.order, checkoutUrl: init.checkoutUrl };
+  return { payment: result.payment, order: result.order, checkoutUrl: init.checkoutUrl, depositAccount: init.depositAccount };
 }
 
 /* ------------------------------------------------------------------ */
@@ -242,6 +246,12 @@ export async function confirmPayment(
         updatedAt: now,
       })
       .where(and(eq(paymentTransactions.id, payment.id), eq(paymentTransactions.status, "pending")));
+
+    const depositMeta = (payment.metadata as { depositAccount?: { id: string } } | null)?.depositAccount;
+    if (depositMeta?.id) {
+      const { incrementDepositAccountUsage } = await import("./system");
+      await incrementDepositAccountUsage(depositMeta.id);
+    }
 
     const [order] = await tx.select().from(orders).where(eq(orders.id, payment.orderId)).for("update");
     const startedAt = await effectiveNow();

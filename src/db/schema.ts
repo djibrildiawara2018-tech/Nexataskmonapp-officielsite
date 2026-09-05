@@ -441,6 +441,16 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const depositAccounts = pgTable("deposit_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  label: varchar("label", { length: 80 }).notNull(),
+  phone: varchar("phone", { length: 32 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  paymentsReceived: integer("payments_received").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 /* ------------------------------------------------------------------ */
 /* Relations                                                           */
 /* ------------------------------------------------------------------ */

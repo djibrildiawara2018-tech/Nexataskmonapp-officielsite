@@ -1,7 +1,7 @@
 import "server-only";
-import { eq, inArray, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 import { db, type DbTx } from "@/db";
-import { appSettings, auditLogs, notifications, products, roles } from "@/db/schema";
+import { appSettings, auditLogs, depositAccounts, notifications, products, roles } from "@/db/schema";
 import { getRequestMeta } from "@/lib/auth/session";
 
 type Executor = DbTx | typeof db;
@@ -99,6 +99,48 @@ export async function isMaintenanceMode(): Promise<boolean> {
 }
 export async function setMaintenanceMode(value: boolean): Promise<void> {
   await setSetting("maintenance_mode", value);
+}
+
+/* ------------------------------------------------------------------ */
+/* Numéros de dépôt (paiements manuels) — répartition équilibrée        */
+/* ------------------------------------------------------------------ */
+export type DepositAccount = typeof depositAccounts.$inferSelect;
+
+export const MIN_DEPOSIT_ACCOUNTS = 5;
+
+export async function listDepositAccounts(): Promise<DepositAccount[]> {
+  return db.select().from(depositAccounts).orderBy(asc(depositAccounts.createdAt));
+}
+
+export async function addDepositAccount(input: { label: string; phone: string }): Promise<void> {
+  await db.insert(depositAccounts).values({ label: input.label, phone: input.phone });
+}
+
+export async function setDepositAccountActive(id: string, isActive: boolean): Promise<void> {
+  await db.update(depositAccounts).set({ isActive, updatedAt: new Date() }).where(eq(depositAccounts.id, id));
+}
+
+export async function deleteDepositAccount(id: string): Promise<void> {
+  await db.delete(depositAccounts).where(eq(depositAccounts.id, id));
+}
+
+/** Sélectionne le numéro actif ayant reçu le moins de paiements confirmés (répartition équilibrée). */
+export async function pickDepositAccount(): Promise<DepositAccount | null> {
+  const rows = await db
+    .select()
+    .from(depositAccounts)
+    .where(eq(depositAccounts.isActive, true))
+    .orderBy(asc(depositAccounts.paymentsReceived), asc(depositAccounts.createdAt))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** À appeler uniquement à la confirmation réelle du paiement, pas à l'initiation. */
+export async function incrementDepositAccountUsage(id: string): Promise<void> {
+  await db
+    .update(depositAccounts)
+    .set({ paymentsReceived: sql`${depositAccounts.paymentsReceived} + 1`, updatedAt: new Date() })
+    .where(eq(depositAccounts.id, id));
 }
 
 /* ------------------------------------------------------------------ */
