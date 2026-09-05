@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { requestWithdrawalAction } from "@/lib/actions/user";
 import type { ActionState } from "@/lib/actions/auth";
 import { useI18n } from "@/lib/i18n/client";
-import { ActionAlert, SubmitButton } from "@/components/client";
+import { ActionAlert, ConfirmForm, SubmitButton } from "@/components/client";
 import { Field, Input, Select } from "@/components/ui";
 
 export function WithdrawForm({ available, availableLabel, minAmount, minLabel, wavePhone }: { available: number; availableLabel: string; minAmount: number; minLabel: string; wavePhone: string | null }) {
@@ -13,13 +13,10 @@ export function WithdrawForm({ available, availableLabel, minAmount, minLabel, w
   const [amount, setAmount] = useState("");
   const canSubmit = available >= minAmount && !!wavePhone;
   return (
-    <form
+    <ConfirmForm
       action={action}
       className="space-y-4"
-      onSubmit={(e) => {
-        const n = Number(amount);
-        if (!window.confirm(t("withdraw.confirm", { amount: money(n), phone: wavePhone ?? "" }))) e.preventDefault();
-      }}
+      confirmMessage={t("withdraw.confirm", { amount: money(Number(amount) || 0), phone: wavePhone ?? "" })}
     >
       <ActionAlert state={state?.error === "withdraw.err.min" ? { error: undefined, success: undefined } : state} />
       {state?.error === "withdraw.err.min" && <p className="text-sm text-rose-600">{t("withdraw.err.min", { amount: minLabel })}</p>}
@@ -46,6 +43,6 @@ export function WithdrawForm({ available, availableLabel, minAmount, minLabel, w
       <SubmitButton size="lg" className="w-full" disabled={!canSubmit}>
         {t("withdraw.submit")}
       </SubmitButton>
-    </form>
+    </ConfirmForm>
   );
 }
