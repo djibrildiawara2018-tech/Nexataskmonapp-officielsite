@@ -78,9 +78,10 @@ export async function requestWithdrawalAction(_prev: ActionState, fd: FormData):
   const user = await requireUser();
   const amount = Number(String(fd.get("amount") ?? "").replace(/\s/g, ""));
   const method = String(fd.get("method") ?? "");
-  const phone = String(fd.get("phone") ?? "").trim();
   const allowed = ["wave", "orange_money", "mtn_momo", "moov_money"] as const;
   if (!allowed.includes(method as (typeof allowed)[number])) return { error: "auth.err.required" };
+  const phone = (user.wavePhone ?? "").trim();
+  if (!phone) return { error: "auth.err.required" };
   if (!/^\+?[0-9]{8,15}$/.test(phone.replace(/[\s.-]/g, ""))) return { error: "auth.err.phoneInvalid" };
   try {
     await requestWithdrawal(user.id, { amount, method: method as (typeof allowed)[number], phone });

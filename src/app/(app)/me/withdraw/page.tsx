@@ -33,7 +33,7 @@ export default async function WithdrawPage({ searchParams }: { searchParams: Pro
             <span className="text-sm text-emerald-800">{t("dash.availableBalance")}</span>
             <span className="font-extrabold text-emerald-900 tabular-nums">{money(balance.available)}</span>
           </div>
-          <WithdrawForm available={balance.available} availableLabel={money(balance.available)} minAmount={MIN_WITHDRAWAL} minLabel={money(MIN_WITHDRAWAL)} defaultPhone={user.phone} />
+          <WithdrawForm available={balance.available} availableLabel={money(balance.available)} minAmount={MIN_WITHDRAWAL} minLabel={money(MIN_WITHDRAWAL)} wavePhone={user.wavePhone} />
           <p className="text-xs text-slate-500 mt-3">{t("withdraw.note")}</p>
         </CardBody>
       </Card>

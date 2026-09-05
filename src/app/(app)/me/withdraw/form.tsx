@@ -7,19 +7,18 @@ import { useI18n } from "@/lib/i18n/client";
 import { ActionAlert, SubmitButton } from "@/components/client";
 import { Field, Input, Select } from "@/components/ui";
 
-export function WithdrawForm({ available, availableLabel, minAmount, minLabel, defaultPhone }: { available: number; availableLabel: string; minAmount: number; minLabel: string; defaultPhone: string }) {
+export function WithdrawForm({ available, availableLabel, minAmount, minLabel, wavePhone }: { available: number; availableLabel: string; minAmount: number; minLabel: string; wavePhone: string | null }) {
   const { t, money } = useI18n();
   const [state, action] = useActionState<ActionState, FormData>(requestWithdrawalAction, null);
   const [amount, setAmount] = useState("");
-  const [phone, setPhone] = useState(defaultPhone);
-  const canSubmit = available >= minAmount;
+  const canSubmit = available >= minAmount && !!wavePhone;
   return (
     <form
       action={action}
       className="space-y-4"
       onSubmit={(e) => {
         const n = Number(amount);
-        if (!window.confirm(t("withdraw.confirm", { amount: money(n), phone }))) e.preventDefault();
+        if (!window.confirm(t("withdraw.confirm", { amount: money(n), phone: wavePhone ?? "" }))) e.preventDefault();
       }}
     >
       <ActionAlert state={state?.error === "withdraw.err.min" ? { error: undefined, success: undefined } : state} />
@@ -32,9 +31,18 @@ export function WithdrawForm({ available, availableLabel, minAmount, minLabel, d
         <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">W</span>
         Retrait via Wave
       </div>
-      <Field label="Numéro Wave" htmlFor="phone" hint="Le retrait sera envoyé sur ce numéro Wave">
-        <Input id="phone" name="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-      </Field>
+        {wavePhone ? (
+          <Field label="Numéro Wave" htmlFor="phone" hint="Le retrait sera envoyé sur ce numéro Wave">
+            <input type="hidden" name="phone" value={wavePhone} />
+            <Input id="phone" type="tel" value={wavePhone} disabled readOnly />
+          </Field>
+        ) : (
+          <div className="rounded-xl bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+            Aucun numéro Wave enregistré.{" "}
+            <a href="/me/profile" className="font-semibold underline">Ajoutez-le dans votre profil</a>{" "}
+            avant de demander un retrait.
+          </div>
+        )}
       <SubmitButton size="lg" className="w-full" disabled={!canSubmit}>
         {t("withdraw.submit")}
       </SubmitButton>
