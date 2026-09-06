@@ -7,7 +7,7 @@ import { useI18n } from "@/lib/i18n/client";
 import { ActionAlert, ConfirmForm, SubmitButton } from "@/components/client";
 import { Field, Input, Select } from "@/components/ui";
 
-export function WithdrawForm({ available, availableLabel, minAmount, minLabel, wavePhone }: { available: number; availableLabel: string; minAmount: number; minLabel: string; wavePhone: string | null }) {
+export function WithdrawForm({ available, availableLabel, minAmount, minLabel, wavePhone, feePercent }: { available: number; availableLabel: string; minAmount: number; minLabel: string; wavePhone: string | null; feePercent: number }) {
   const { t, money } = useI18n();
   const [state, action] = useActionState<ActionState, FormData>(requestWithdrawalAction, null);
   const [amount, setAmount] = useState("");
@@ -23,6 +23,12 @@ export function WithdrawForm({ available, availableLabel, minAmount, minLabel, w
       <Field label={t("withdraw.amount")} htmlFor="amount" hint={`${t("withdraw.min", { amount: minLabel })} · ${t("withdraw.available", { amount: availableLabel })}`}>
         <Input id="amount" name="amount" type="number" inputMode="numeric" min={minAmount} max={available} step={1} value={amount} onChange={(e) => setAmount(e.target.value)} required />
       </Field>
+      {Number(amount) > 0 && (
+        <div className="rounded-xl bg-slate-50 px-3 py-2.5 text-sm">
+          <p className="text-slate-500">Frais ({feePercent}%) : -{money(Math.floor((Number(amount) * feePercent) / 100))}</p>
+          <p className="font-bold text-emerald-700">Vous recevrez : {money(Number(amount) - Math.floor((Number(amount) * feePercent) / 100))}</p>
+        </div>
+      )}
         <input type="hidden" name="method" value="wave" />
       <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800">
         <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">W</span>
