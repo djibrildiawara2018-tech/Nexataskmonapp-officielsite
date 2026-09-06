@@ -238,3 +238,20 @@ export async function getSponsor(userId: string) {
     .limit(1);
   return s ?? null;
 }
+
+/** Classement des meilleurs parrains par commissions totales gagnées (top N). */
+export async function getTopReferrers(limit = 10) {
+  return db
+    .select({
+      userId: referralCommissions.beneficiaryId,
+      firstName: profiles.firstName,
+      lastName: profiles.lastName,
+      total: sql<number>`coalesce(sum(${referralCommissions.amount}), 0)::bigint`,
+      referralCount: sql<number>`count(distinct ${referralCommissions.sourceUserId})::int`,
+    })
+    .from(referralCommissions)
+    .innerJoin(profiles, eq(profiles.id, referralCommissions.beneficiaryId))
+    .groupBy(referralCommissions.beneficiaryId, profiles.firstName, profiles.lastName)
+    .orderBy(desc(sql`sum(${referralCommissions.amount})`))
+    .limit(limit);
+}

@@ -3,7 +3,7 @@ import { REFERRAL_RATES } from "@/lib/config";
 import { getBaseUrl } from "@/lib/url";
 import { formatDate, formatMoney } from "@/lib/i18n/config";
 import { getT } from "@/lib/i18n/server";
-import { getTeamData, pageOf } from "@/lib/queries/user";
+import { getTeamData, getTopReferrers, pageOf } from "@/lib/queries/user";
 import { CopyButton, ShareButton } from "@/components/client";
 import { Badge, Card, CardBody, EmptyState, Icon, PageHeader, Pagination, SectionTitle, StatCard, cn } from "@/components/ui";
 
@@ -14,7 +14,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const page = pageOf(sp.page);
   const { t, locale } = await getT();
-  const data = await getTeamData(user.id, page);
+  const [data, topReferrers] = await Promise.all([getTeamData(user.id, page), getTopReferrers(10)]);
   const link = `${await getBaseUrl()}/register?ref=${user.referralCode}`;
   const money = (n: number) => formatMoney(n, locale);
 
@@ -75,6 +75,33 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           <p className="text-[11px] text-emerald-100">{t("team.rates", { l1: REFERRAL_RATES[1], l2: REFERRAL_RATES[2], l3: REFERRAL_RATES[3] })}</p>
         </CardBody>
       </Card>
+
+      {topReferrers.length > 0 && (
+        <section>
+          <SectionTitle>🏆 Top parrains</SectionTitle>
+          <Card>
+            <ul className="divide-y divide-slate-100">
+              {topReferrers.map((r, i) => (
+                <li key={r.userId} className={cn("flex items-center gap-3 px-4 py-3", r.userId === user.id && "bg-emerald-50")}>
+                  <span className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                    i === 0 ? "bg-amber-400 text-white" : i === 1 ? "bg-slate-300 text-slate-700" : i === 2 ? "bg-amber-700 text-white" : "bg-slate-100 text-slate-500",
+                  )}>
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate">
+                      {r.firstName} {r.lastName.charAt(0)}. {r.userId === user.id && <span className="text-emerald-600">(vous)</span>}
+                    </p>
+                    <p className="text-xs text-slate-500">{r.referralCount} filleul(s)</p>
+                  </div>
+                  <p className="font-bold text-emerald-700 tabular-nums">{money(Number(r.total))}</p>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+      )}
 
       <section>
         <SectionTitle>{t("team.tree")}</SectionTitle>
