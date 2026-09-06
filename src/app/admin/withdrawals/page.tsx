@@ -38,6 +38,8 @@ export default async function AdminWithdrawalsPage({ searchParams }: { searchPar
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-extrabold text-lg tabular-nums">{money(w.amount)} {w.isDemo && <span className="text-[10px] font-bold text-amber-700 align-middle">DEMO</span>}</p>
+                    <p className="text-xs text-slate-500">Demandé : {money(w.amount)} · Frais ({w.feePercent}%) : -{money(w.feeAmount)}</p>
+                    <p className="text-sm font-bold text-emerald-700">À envoyer réellement : {money(w.netAmount)}</p>
                     <p className="text-sm"><Link href={`/admin/users/${userId}`} className="font-medium text-emerald-700 hover:underline">{firstName} {lastName}</Link> <span className="text-slate-500">· {email}</span></p>
                     <p className="text-xs text-slate-500">{t(`method.${w.method}` as DictKey)} · {w.phone} · {formatDateTime(w.createdAt, locale)}</p>
                     {w.adminNote && <p className="text-xs italic text-slate-500 mt-1">{w.adminNote}</p>}
