@@ -3,7 +3,7 @@ import { logoutAction } from "@/lib/actions/auth";
 import { requireUser, isAdmin } from "@/lib/auth/session";
 import { formatDate, formatMoney } from "@/lib/i18n/config";
 import { getT } from "@/lib/i18n/server";
-import { getBalance, getSponsor, getUnreadCount } from "@/lib/queries/user";
+import { getBalance, getSponsor, getUnreadCount, hasCompletedWithdrawal } from "@/lib/queries/user";
 import { CopyButton, LanguageSwitcher } from "@/components/client";
 import { Badge, Card, CardBody, Icon, buttonClass } from "@/components/ui";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function MePage() {
   const user = await requireUser();
   const { t, locale } = await getT();
-  const [balance, sponsor, unread] = await Promise.all([getBalance(user.id), getSponsor(user.id), getUnreadCount(user.id)]);
+  const [balance, sponsor, unread, withdrawn] = await Promise.all([getBalance(user.id), getSponsor(user.id), getUnreadCount(user.id), hasCompletedWithdrawal(user.id)]);
   const money = (n: number) => formatMoney(n, locale);
   const links = [
     { href: "/me/profile", icon: "user", label: t("me.editProfile") },
@@ -36,7 +36,10 @@ export default async function MePage() {
             <p className="text-sm text-slate-500 truncate">{user.email}</p>
             <p className="text-xs text-slate-500">{user.phone}</p>
           </div>
-          {isAdmin(user) && <Badge tone="violet">admin</Badge>}
+          <div className="flex flex-col gap-1 items-end">
+            {isAdmin(user) && <Badge tone="violet">admin</Badge>}
+            {withdrawn && <Badge tone="emerald">✓ Retrait effectué</Badge>}
+          </div>
         </CardBody>
         <div className="border-t border-slate-100 px-4 py-3 grid grid-cols-3 text-center">
           <div>

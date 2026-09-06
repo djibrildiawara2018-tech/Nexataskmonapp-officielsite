@@ -255,3 +255,13 @@ export async function getTopReferrers(limit = 10) {
     .orderBy(desc(sql`sum(${referralCommissions.amount})`))
     .limit(limit);
 }
+
+/** true si l'utilisateur a au moins un retrait complété (badge de confiance). */
+export async function hasCompletedWithdrawal(userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: withdrawals.id })
+    .from(withdrawals)
+    .where(and(eq(withdrawals.userId, userId), eq(withdrawals.status, "completed")))
+    .limit(1);
+  return !!row;
+}
