@@ -182,9 +182,10 @@ export async function addDepositAccountAction(fd: FormData): Promise<void> {
   const admin = await requireAdmin();
   const label = String(fd.get("label") ?? "").trim();
   const phone = String(fd.get("phone") ?? "").trim();
+  const waveLink = String(fd.get("waveLink") ?? "").trim();
   if (label && phone) {
-    await addDepositAccount({ label, phone });
-    await audit(db, { adminId: admin.id, action: "deposit_account.create", entityType: "deposit_account", newValue: { label, phone } });
+    await addDepositAccount({ label, phone, waveLink });
+    await audit(db, { adminId: admin.id, action: "deposit_account.create", entityType: "deposit_account", newValue: { label, phone, waveLink } });
   }
   revalidatePath("/admin/settings");
 }
@@ -215,9 +216,10 @@ export async function updateDepositAccountAction(fd: FormData): Promise<void> {
   const id = String(fd.get("id") ?? "");
   const label = String(fd.get("label") ?? "").trim();
   const phone = String(fd.get("phone") ?? "").trim();
+  const waveLink = String(fd.get("waveLink") ?? "").trim();
   if (id && label && phone) {
-    await updateDepositAccount(id, { label, phone });
-    await audit(db, { adminId: admin.id, action: "deposit_account.update", entityType: "deposit_account", entityId: id, newValue: { label, phone } });
+    await updateDepositAccount(id, { label, phone, waveLink });
+    await audit(db, { adminId: admin.id, action: "deposit_account.update", entityType: "deposit_account", entityId: id, newValue: { label, phone, waveLink } });
   }
   revalidatePath("/admin/settings");
 }

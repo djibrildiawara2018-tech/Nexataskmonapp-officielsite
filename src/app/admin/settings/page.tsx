@@ -80,6 +80,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
                     <input type="hidden" name="id" value={a.id} />
                     <Input name="label" defaultValue={a.label} placeholder="Nom du numéro" required />
                     <Input name="phone" type="tel" defaultValue={a.phone} placeholder="Numéro Wave" required />
+                    <Input name="waveLink" type="url" defaultValue={a.waveLink ?? ""} placeholder="Lien de paiement Wave (optionnel)" className="sm:col-span-2" />
                     <button className={buttonClass("primary", "sm", "sm:col-span-2")}>Enregistrer les modifications</button>
                   </form>
                 </details>
@@ -93,6 +94,9 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
             </Field>
             <Field label="Numéro Wave" htmlFor="phone">
               <Input id="phone" name="phone" type="tel" placeholder="+2250102030405" required />
+            </Field>
+            <Field label="Lien de paiement Wave (optionnel)" htmlFor="waveLink" hint="pay.wave.com/m/...">
+              <Input id="waveLink" name="waveLink" type="url" placeholder="https://pay.wave.com/m/..." />
             </Field>
             <button className={buttonClass("primary", "md", "sm:col-span-2")}>Ajouter le numéro</button>
           </form>

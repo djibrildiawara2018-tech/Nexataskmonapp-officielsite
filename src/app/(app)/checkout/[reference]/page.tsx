@@ -93,15 +93,33 @@ export default async function CheckoutPage({ params }: { params: Promise<{ refer
                   <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> {t("checkout.awaiting")}
                 </p>
                 {(() => {
-                  const meta = payment.metadata as { depositAccount?: { label: string; phone: string } } | null;
+                  const meta = payment.metadata as { depositAccount?: { label: string; phone: string; waveLink?: string | null } } | null;
                   const account = meta?.depositAccount;
                   if (!account) {
                     return <p className="text-sm text-rose-600">Aucun numéro de dépôt disponible. Contactez le support.</p>;
                   }
                   return (
-                    <div className="rounded-xl bg-emerald-50 p-4 space-y-1">
-                      <p className="text-xs text-emerald-700">Envoyez {money(payment.amount)} via Wave à :</p>
-                      <p className="text-lg font-extrabold text-emerald-900">{account.phone}</p>
+                    <div className="rounded-xl bg-emerald-50 p-4 space-y-2">
+                      <p className="text-xs text-emerald-700">Montant à envoyer via Wave :</p>
+                      <p className="text-lg font-extrabold text-emerald-900">{money(payment.amount)}</p>
+                      {account.waveLink ? (
+                        <>
+                          <a
+                            href={account.waveLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={buttonClass("primary", "md", "w-full")}
+                          >
+                            Payer avec Wave
+                          </a>
+                          <p className="text-xs text-emerald-700">Saisissez bien le montant exact ci-dessus une fois dans Wave.</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs text-emerald-700">Envoyez ce montant au numéro :</p>
+                          <p className="font-bold text-emerald-900">{account.phone}</p>
+                        </>
+                      )}
                       <p className="text-xs text-emerald-700">{account.label}</p>
                     </div>
                   );

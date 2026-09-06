@@ -112,18 +112,18 @@ export async function listDepositAccounts(): Promise<DepositAccount[]> {
   return db.select().from(depositAccounts).orderBy(asc(depositAccounts.createdAt));
 }
 
-export async function addDepositAccount(input: { label: string; phone: string }): Promise<void> {
-  await db.insert(depositAccounts).values({ label: input.label, phone: input.phone });
+export async function addDepositAccount(input: { label: string; phone: string; waveLink?: string }): Promise<void> {
+  await db.insert(depositAccounts).values({ label: input.label, phone: input.phone, waveLink: input.waveLink || null });
 }
 
 export async function setDepositAccountActive(id: string, isActive: boolean): Promise<void> {
   await db.update(depositAccounts).set({ isActive, updatedAt: new Date() }).where(eq(depositAccounts.id, id));
 }
 
-export async function updateDepositAccount(id: string, input: { label: string; phone: string }): Promise<void> {
+export async function updateDepositAccount(id: string, input: { label: string; phone: string; waveLink?: string }): Promise<void> {
   await db
     .update(depositAccounts)
-    .set({ label: input.label, phone: input.phone, updatedAt: new Date() })
+    .set({ label: input.label, phone: input.phone, waveLink: input.waveLink || null, updatedAt: new Date() })
     .where(eq(depositAccounts.id, id));
 }
 

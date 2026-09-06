@@ -445,6 +445,7 @@ export const depositAccounts = pgTable("deposit_accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
   label: varchar("label", { length: 80 }).notNull(),
   phone: varchar("phone", { length: 32 }).notNull(),
+  waveLink: varchar("wave_link", { length: 255 }),
   isActive: boolean("is_active").notNull().default(true),
   paymentsReceived: integer("payments_received").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

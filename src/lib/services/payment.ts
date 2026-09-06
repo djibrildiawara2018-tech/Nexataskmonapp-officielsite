@@ -27,7 +27,7 @@ export type InitiatePaymentResult = {
   checkoutUrl?: string;
   providerReference?: string;
   /** Mode manuel : numéro de dépôt assigné à afficher à l'utilisateur. */
-  depositAccount?: { id: string; label: string; phone: string };
+  depositAccount?: { id: string; label: string; phone: string; waveLink?: string | null };
 };
 
 export type PayoutInput = {
@@ -177,7 +177,7 @@ class ManualProvider implements PaymentProvider {
     return {
       checkoutUrl: appUrl(`/checkout/${input.reference}`),
       providerReference: `MANUAL-${account.id.slice(0, 8)}`,
-      depositAccount: { id: account.id, label: account.label, phone: account.phone },
+      depositAccount: { id: account.id, label: account.label, phone: account.phone, waveLink: account.waveLink },
     };
   }
   async verify(): Promise<"paid" | "pending" | "failed"> {
