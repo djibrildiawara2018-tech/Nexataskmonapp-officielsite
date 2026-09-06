@@ -94,6 +94,15 @@ export async function setWithdrawalFeePercent(value: number): Promise<void> {
   await setSetting("withdrawal_fee_percent", value);
 }
 
+const DEFAULT_WELCOME_BONUS = 2000;
+
+export async function getWelcomeBonus(): Promise<number> {
+  return getSetting<number>("welcome_bonus", DEFAULT_WELCOME_BONUS);
+}
+export async function setWelcomeBonus(value: number): Promise<void> {
+  await setSetting("welcome_bonus", value);
+}
+
 export async function isMaintenanceMode(): Promise<boolean> {
   return getSetting<boolean>("maintenance_mode", false);
 }

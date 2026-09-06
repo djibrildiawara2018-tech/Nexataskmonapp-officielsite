@@ -4,7 +4,7 @@ import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { passwordResetTokens, profiles, userBalances } from "@/db/schema";
+import { notifications, passwordResetTokens, profiles, userBalances } from "@/db/schema";
 import {
   createSession,
   destroySession,
@@ -19,8 +19,8 @@ import {
 import { DEMO_MODE } from "@/lib/config";
 import { getBaseUrl } from "@/lib/url";
 import { isLocale, LOCALE_COOKIE } from "@/lib/i18n/config";
-import { createReferralChain } from "@/lib/services/finance";
-import { audit, ensureSeeded } from "@/lib/services/system";
+import { applyLedger, createReferralChain } from "@/lib/services/finance";
+import { audit, ensureSeeded, getWelcomeBonus } from "@/lib/services/system";
 
 export type ActionState = { error?: string; success?: string; data?: Record<string, string> } | null;
 
@@ -114,6 +114,27 @@ export async function registerAction(_prev: ActionState, fd: FormData): Promise<
         })
         .returning({ id: profiles.id });
       await tx.insert(userBalances).values({ userId: user.id }).onConflictDoNothing();
+      const welcomeBonus = await getWelcomeBonus();
+      if (welcomeBonus > 0) {
+        await applyLedger(tx, {
+          userId: user.id,
+          type: "bonus",
+          amount: welcomeBonus,
+          effect: "credit",
+          idempotencyKey: `welcome_bonus:${user.id}`,
+          referenceType: "welcome_bonus",
+          referenceId: user.id,
+          description: "Bonus de bienvenue",
+          counters: { totalBonus: welcomeBonus },
+        });
+        await tx.insert(notifications).values({
+          userId: user.id,
+          type: "bonus_credited",
+          title: "Bonus de bienvenue",
+          body: `Vous avez reçu ${welcomeBonus} FCFA de bonus de bienvenue !`,
+          data: { amount: welcomeBonus },
+        });
+      }
       if (sponsorId) await createReferralChain(tx, user.id, `${firstName} ${lastName.charAt(0)}.`);
       if (isBootstrap) {
         await audit(tx, {
