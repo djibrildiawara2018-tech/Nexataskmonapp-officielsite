@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { toggleUserRoleAction, toggleUserStatusAction } from "@/lib/actions/admin";
+import { toggleUserRoleAction, toggleUserStatusAction, resetUserFinancesAction } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { formatDateTime, formatMoney } from "@/lib/i18n/config";
 import { getT } from "@/lib/i18n/server";
 import { getUserDetail } from "@/lib/queries/admin";
 import { ConfirmForm, StatusBadge } from "@/components/client";
+import { Input } from "@/components/ui";
 import { Alert, Badge, Card, CardBody, EmptyState, Icon, SectionTitle, StatCard, buttonClass } from "@/components/ui";
 import type { DictKey } from "@/lib/i18n";
 
@@ -50,6 +51,19 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
         </CardBody>
       </Card>
       <Alert tone="info"><span className="inline-flex gap-2"><Icon name="lock" className="w-4 h-4 mt-0.5" />{t("admin.users.noPassword")}</span></Alert>
+      <Card className="border-rose-300 bg-rose-50">
+        <CardBody className="space-y-3">
+          <h2 className="font-bold text-rose-800 flex items-center gap-2"><Icon name="alertTriangle" className="w-4 h-4" /> Zone dangereuse</h2>
+          <p className="text-xs text-rose-700">
+            Réinitialise définitivement tous les paiements, retraits, produits et le solde de cet utilisateur. Action irréversible.
+          </p>
+          <form action={resetUserFinancesAction} className="flex flex-col sm:flex-row gap-2">
+            <input type="hidden" name="id" value={u.id} />
+            <Input name="confirmValue" placeholder="Nom complet ou numéro de téléphone" className="flex-1" required />
+            <button className={buttonClass("danger", "sm", "whitespace-nowrap")}>Réinitialiser</button>
+          </form>
+        </CardBody>
+      </Card>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label={t("common.balance")} value={money(d.balance?.available ?? 0)} tone="emerald" />
         <StatCard label={t("dash.totalInvested")} value={money(d.balance?.totalInvested ?? 0)} />

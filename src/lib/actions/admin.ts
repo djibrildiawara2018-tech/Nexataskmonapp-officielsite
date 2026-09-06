@@ -14,6 +14,8 @@ import {
   confirmPayment,
   FinanceError,
   rejectWithdrawal,
+  resetUserFinances,
+  resetAllUsersFinances,
 } from "@/lib/services/finance";
 import { audit, DEFAULT_HOME_BANNER, getDemoDayOffset, getHomeSettings, notify, setSetting, getMinWithdrawal, setMinWithdrawal, getWithdrawalFeePercent, setWithdrawalFeePercent, isMaintenanceMode, setMaintenanceMode, addDepositAccount, deleteDepositAccount, setDepositAccountActive, updateDepositAccount } from "@/lib/services/system";
 import type { ActionState } from "./auth";
@@ -310,4 +312,46 @@ export async function advanceDemoDayAction(): Promise<void> {
   await audit(db, { adminId: admin.id, action: "demo.advance_day", entityType: "system", oldValue: { offset: current }, newValue: { offset: current + 1 } });
   const result = await accrueBonuses({ limit: 2000 });
   redirect(`/admin/settings?msg=day_advanced&orders=${result.processed}&credits=${result.credits}`);
+}
+
+/* ------------------------------ Réinitialisation financière (danger) ------------------------------ */
+export async function resetUserFinancesAction(fd: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const id = String(fd.get("id") ?? "");
+  const confirmValue = String(fd.get("confirmValue") ?? "").trim().toLowerCase();
+  if (!id) redirect(`/admin/users/${id}?msg=error`);
+
+  const [target] = await db
+    .select({ phone: profiles.phone, firstName: profiles.firstName, lastName: profiles.lastName })
+    .from(profiles)
+    .where(eq(profiles.id, id))
+    .limit(1);
+  if (!target) redirect(`/admin/users/${id}?msg=error`);
+
+  const fullName = `${target.firstName} ${target.lastName}`.trim().toLowerCase();
+  const matches = confirmValue === target.phone.toLowerCase() || confirmValue === fullName;
+  if (!matches) redirect(`/admin/users/${id}?msg=reset_mismatch`);
+
+  try {
+    await resetUserFinances(admin.id, id);
+  } catch (e) {
+    console.error(e);
+    redirect(`/admin/users/${id}?msg=error`);
+  }
+  revalidatePath(`/admin/users/${id}`);
+  redirect(`/admin/users/${id}?msg=reset_done`);
+}
+
+export async function resetAllUsersFinancesAction(fd: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const confirmValue = String(fd.get("confirmValue") ?? "").trim();
+  if (confirmValue !== "REINITIALISER TOUT") redirect("/admin/users?msg=reset_mismatch");
+  try {
+    await resetAllUsersFinances(admin.id);
+  } catch (e) {
+    console.error(e);
+    redirect("/admin/users?msg=error");
+  }
+  revalidatePath("/admin/users");
+  redirect("/admin/users?msg=reset_all_done");
 }

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
 import { db, type DbTx } from "@/db";
 import {
   bonusTransactions,
@@ -425,6 +425,68 @@ export async function cancelPayment(userId: string, paymentId: string) {
         .set({ status: "cancelled", updatedAt: new Date() })
         .where(and(eq(orders.id, p.orderId), eq(orders.status, "pending")));
     }
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/* Réinitialisation financière (admin) — IRRÉVERSIBLE                   */
+/* ------------------------------------------------------------------ */
+export async function resetUserFinances(adminId: string, targetUserId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.delete(referralCommissions).where(
+      or(eq(referralCommissions.sourceUserId, targetUserId), eq(referralCommissions.beneficiaryId, targetUserId)),
+    );
+    await tx.delete(bonusTransactions).where(eq(bonusTransactions.userId, targetUserId));
+    await tx.delete(paymentTransactions).where(eq(paymentTransactions.userId, targetUserId));
+    await tx.delete(orders).where(eq(orders.userId, targetUserId));
+    await tx.delete(withdrawals).where(eq(withdrawals.userId, targetUserId));
+    await tx.delete(ledgerEntries).where(eq(ledgerEntries.userId, targetUserId));
+    await tx
+      .update(userBalances)
+      .set({
+        available: 0,
+        totalInvested: 0,
+        totalBonus: 0,
+        totalCommission: 0,
+        pendingWithdrawal: 0,
+        totalWithdrawn: 0,
+        updatedAt: new Date(),
+      })
+      .where(eq(userBalances.userId, targetUserId));
+    await audit(tx, {
+      adminId,
+      action: "user.reset_finances",
+      entityType: "user",
+      entityId: targetUserId,
+      newValue: { reason: "manual_reset" },
+    });
+  });
+}
+
+/** Réinitialisation financière de TOUS les utilisateurs (y compris admins). IRRÉVERSIBLE. */
+export async function resetAllUsersFinances(adminId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.delete(referralCommissions);
+    await tx.delete(bonusTransactions);
+    await tx.delete(paymentTransactions);
+    await tx.delete(orders);
+    await tx.delete(withdrawals);
+    await tx.delete(ledgerEntries);
+    await tx.update(userBalances).set({
+      available: 0,
+      totalInvested: 0,
+      totalBonus: 0,
+      totalCommission: 0,
+      pendingWithdrawal: 0,
+      totalWithdrawn: 0,
+      updatedAt: new Date(),
+    });
+    await audit(tx, {
+      adminId,
+      action: "platform.reset_all_finances",
+      entityType: "platform",
+      newValue: { reason: "global_reset" },
+    });
   });
 }
 

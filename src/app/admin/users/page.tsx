@@ -3,8 +3,9 @@ import { formatDate, formatMoney } from "@/lib/i18n/config";
 import { getT } from "@/lib/i18n/server";
 import { listUsers } from "@/lib/queries/admin";
 import { pageOf } from "@/lib/queries/user";
-import { StatusBadge } from "@/components/client";
-import { Badge, Card, EmptyState, Icon, Input, PageHeader, Pagination, buttonClass } from "@/components/ui";
+import { ConfirmForm, StatusBadge } from "@/components/client";
+import { resetAllUsersFinancesAction } from "@/lib/actions/admin";
+import { Badge, Card, CardBody, EmptyState, Icon, Input, PageHeader, Pagination, buttonClass } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,22 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   return (
     <div className="space-y-4">
       <PageHeader title={t("admin.users")} subtitle={`${data.total}`} />
+      <Card className="border-rose-300 bg-rose-50">
+        <CardBody className="space-y-3">
+          <h2 className="font-bold text-rose-800 flex items-center gap-2"><Icon name="alertTriangle" className="w-4 h-4" /> Zone dangereuse — tous les utilisateurs</h2>
+          <p className="text-xs text-rose-700">
+            Réinitialise définitivement les paiements, retraits, produits et soldes de TOUS les utilisateurs, y compris les administrateurs. Action irréversible et globale.
+          </p>
+          <ConfirmForm
+            action={resetAllUsersFinancesAction}
+            confirmMessage="Cette action va réinitialiser TOUS les utilisateurs et administrateurs. Continuer ?"
+            className="flex flex-col sm:flex-row gap-2"
+          >
+            <Input name="confirmValue" placeholder='Tapez exactement : REINITIALISER TOUT' className="flex-1" required />
+            <button className={buttonClass("danger", "sm", "whitespace-nowrap")}>Tout réinitialiser</button>
+          </ConfirmForm>
+        </CardBody>
+      </Card>
       <form className="flex gap-2">
         <Input name="q" defaultValue={q} placeholder={t("admin.users.search")} />
         <button className={buttonClass("primary", "md")}>
