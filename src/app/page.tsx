@@ -7,13 +7,15 @@ import { DemoBanner, LanguageSwitcher } from "@/components/client";
 import { Photo } from "@/components/photo";
 import { TelegramFab } from "@/components/telegram-fab";
 import { getHomeSettings } from "@/lib/services/system";
+import { getPlatformStats } from "@/lib/queries/user";
+import { formatMoney } from "@/lib/i18n/config";
 import { buttonClass, Icon } from "@/components/ui";
 
 export default async function LandingPage() {
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
   const { t } = await getT();
-  const { banner, telegram } = await getHomeSettings();
+  const [{ banner, telegram }, stats] = await Promise.all([getHomeSettings(), getPlatformStats()]);
   const bannerTitle = banner.title || t("home.banner.title");
   const bannerText = banner.text || t("home.banner.text");
   const features = [
@@ -61,6 +63,18 @@ export default async function LandingPage() {
               <h2 className="text-lg sm:text-2xl font-extrabold leading-tight drop-shadow">{bannerTitle}</h2>
               <p className="mt-1 max-w-md text-xs sm:text-sm text-emerald-50/90 leading-snug">{bannerText}</p>
             </div>
+          </div>
+        </div>
+      </section>
+      <section className="bg-emerald-600 text-white">
+        <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-2xl sm:text-3xl font-extrabold tabular-nums">{stats.activeUsers.toLocaleString("fr-FR")}+</p>
+            <p className="text-xs sm:text-sm text-emerald-100 mt-1">Utilisateurs actifs</p>
+          </div>
+          <div>
+            <p className="text-2xl sm:text-3xl font-extrabold tabular-nums">{formatMoney(stats.totalPaid, "fr")}</p>
+            <p className="text-xs sm:text-sm text-emerald-100 mt-1">Gains distribués</p>
           </div>
         </div>
       </section>

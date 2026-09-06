@@ -265,3 +265,14 @@ export async function hasCompletedWithdrawal(userId: string): Promise<boolean> {
     .limit(1);
   return !!row;
 }
+
+/** Statistiques publiques affichées sur la page d'accueil. */
+export async function getPlatformStats() {
+  const [[{ activeUsers }], [{ totalPaid }]] = await Promise.all([
+    db.select({ activeUsers: sql<number>`count(*)::int` }).from(profiles).where(eq(profiles.status, "active")),
+    db
+      .select({ totalPaid: sql<number>`coalesce(sum(${userBalances.totalBonus} + ${userBalances.totalCommission}), 0)::bigint` })
+      .from(userBalances),
+  ]);
+  return { activeUsers, totalPaid: Number(totalPaid) };
+}
