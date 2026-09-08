@@ -285,6 +285,9 @@ export const fr = {
   // ---- Flash
   "flash.withdrawal_requested": "Demande de retrait envoyée.",
   "flash.profile_updated": "Profil mis à jour.",
+  "flash.reset_done": "Finances de l'utilisateur réinitialisées avec succès.",
+  "flash.reset_mismatch": "Le nom ou le numéro saisi ne correspond pas. Réessayez.",
+  "flash.reset_all_done": "Toutes les finances ont été réinitialisées avec succès.",
   "flash.password_updated": "Mot de passe mis à jour.",
   "flash.product_saved": "Produit enregistré.",
   "flash.user_updated": "Utilisateur mis à jour.",

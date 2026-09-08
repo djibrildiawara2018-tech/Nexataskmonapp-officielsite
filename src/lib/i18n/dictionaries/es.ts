@@ -272,6 +272,9 @@ export const es: Record<keyof typeof fr, string> = {
 
   "flash.withdrawal_requested": "Solicitud de retiro enviada.",
   "flash.profile_updated": "Perfil actualizado.",
+  "flash.reset_done": "Finanzas del usuario reiniciadas con éxito.",
+  "flash.reset_mismatch": "El nombre o número ingresado no coincide. Inténtelo de nuevo.",
+  "flash.reset_all_done": "Todas las finanzas se han reiniciado con éxito.",
   "flash.password_updated": "Contraseña actualizada.",
   "flash.product_saved": "Producto guardado.",
   "flash.user_updated": "Usuario actualizado.",

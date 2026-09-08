@@ -272,6 +272,9 @@ export const en: Record<keyof typeof fr, string> = {
 
   "flash.withdrawal_requested": "Withdrawal request sent.",
   "flash.profile_updated": "Profile updated.",
+  "flash.reset_done": "User finances reset successfully.",
+  "flash.reset_mismatch": "The name or number entered does not match. Try again.",
+  "flash.reset_all_done": "All finances have been reset successfully.",
   "flash.password_updated": "Password updated.",
   "flash.product_saved": "Product saved.",
   "flash.user_updated": "User updated.",
