@@ -509,7 +509,9 @@ export async function accrueBonuses(opts: { userId?: string; limit?: number } = 
   for (const order of active) {
     if (!order.startedAt) continue;
     const elapsed = Math.floor((now.getTime() - order.startedAt.getTime()) / DAY_MS);
-    const target = Math.min(elapsed, order.durationDays);
+    // +1 car le jour 1 est déjà crédité immédiatement à l'achat (voir confirmPayment) :
+    // le jour 2 doit arriver 24h après le jour 1, pas 48h après l'achat.
+    const target = Math.min(elapsed + 1, order.durationDays);
     let creditedAmount = 0;
     let lastDay = order.bonusDaysPaid;
     for (let day = order.bonusDaysPaid + 1; day <= target; day++) {
