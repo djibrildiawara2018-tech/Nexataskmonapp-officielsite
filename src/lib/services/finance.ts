@@ -4,6 +4,7 @@ import { db, type DbTx } from "@/db";
 import {
   bonusTransactions,
   ledgerEntries,
+  notifications,
   orders,
   paymentTransactions,
   products,
@@ -441,6 +442,11 @@ export async function resetUserFinances(adminId: string, targetUserId: string): 
     await tx.delete(orders).where(eq(orders.userId, targetUserId));
     await tx.delete(withdrawals).where(eq(withdrawals.userId, targetUserId));
     await tx.delete(ledgerEntries).where(eq(ledgerEntries.userId, targetUserId));
+    await tx.delete(notifications).where(eq(notifications.userId, targetUserId));
+    // Casse les liens de parrainage : ses filleuls deviennent orphelins, et lui perd son propre parrain.
+    await tx.delete(referrals).where(or(eq(referrals.referrerId, targetUserId), eq(referrals.referredId, targetUserId)));
+    await tx.update(profiles).set({ referredBy: null, updatedAt: new Date() }).where(eq(profiles.id, targetUserId));
+    await tx.update(profiles).set({ referredBy: null, updatedAt: new Date() }).where(eq(profiles.referredBy, targetUserId));
     await tx
       .update(userBalances)
       .set({
@@ -472,6 +478,9 @@ export async function resetAllUsersFinances(adminId: string): Promise<void> {
     await tx.delete(orders);
     await tx.delete(withdrawals);
     await tx.delete(ledgerEntries);
+    await tx.delete(notifications);
+    await tx.delete(referrals);
+    await tx.update(profiles).set({ referredBy: null, updatedAt: new Date() });
     await tx.update(userBalances).set({
       available: 0,
       totalInvested: 0,
