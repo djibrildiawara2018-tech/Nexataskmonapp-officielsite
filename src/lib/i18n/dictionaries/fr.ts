@@ -185,7 +185,7 @@ export const fr = {
   "team.tree": "Arbre de parrainage",
   "team.noMembers": "Aucun membre pour le moment. Invitez vos proches !",
   "team.history": "Historique des commissions",
-  "team.rates": "Niveau 1 : {l1} % · Niveau 2 : {l2} % · Niveau 3 : {l3} %",
+  "team.rates": "1er achat : {l1} % · 2e achat : {l2} % · 3e achat : {l3} % (parrain direct uniquement)",
   "team.commissionFrom": "Commission niveau {level} — {name}",
   "team.joined": "Inscrit le {date}",
   "team.members": "{count} membre(s)",

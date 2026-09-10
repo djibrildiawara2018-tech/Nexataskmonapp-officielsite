@@ -179,7 +179,7 @@ export const en: Record<keyof typeof fr, string> = {
   "team.tree": "Referral tree",
   "team.noMembers": "No members yet. Invite your friends!",
   "team.history": "Commission history",
-  "team.rates": "Level 1: {l1}% · Level 2: {l2}% · Level 3: {l3}%",
+  "team.rates": "1st purchase: {l1}% · 2nd: {l2}% · 3rd: {l3}% (direct sponsor only)",
   "team.commissionFrom": "Level {level} commission — {name}",
   "team.joined": "Joined {date}",
   "team.members": "{count} member(s)",

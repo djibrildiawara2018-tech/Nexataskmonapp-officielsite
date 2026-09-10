@@ -179,7 +179,7 @@ export const es: Record<keyof typeof fr, string> = {
   "team.tree": "Árbol de referidos",
   "team.noMembers": "Aún no hay miembros. ¡Invita a tus amigos!",
   "team.history": "Historial de comisiones",
-  "team.rates": "Nivel 1: {l1} % · Nivel 2: {l2} % · Nivel 3: {l3} %",
+  "team.rates": "1ra compra: {l1} % · 2da: {l2} % · 3ra: {l3} % (solo patrocinador directo)",
   "team.commissionFrom": "Comisión nivel {level} — {name}",
   "team.joined": "Registrado el {date}",
   "team.members": "{count} miembro(s)",
