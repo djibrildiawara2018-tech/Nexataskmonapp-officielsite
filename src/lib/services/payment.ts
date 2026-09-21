@@ -175,7 +175,9 @@ class ManualProvider implements PaymentProvider {
     const account = await pickDepositAccount();
     if (!account) throw new Error("Aucun numéro de dépôt actif configuré");
     return {
-      checkoutUrl: appUrl(`/checkout/${input.reference}`),
+      // Si un lien de paiement Wave est configuré pour ce numéro, redirection automatique.
+      // Sinon, on retombe sur la page interne (numéro à copier manuellement).
+      checkoutUrl: account.waveLink || appUrl(`/checkout/${input.reference}`),
       providerReference: `MANUAL-${account.id.slice(0, 8)}`,
       depositAccount: { id: account.id, label: account.label, phone: account.phone, waveLink: account.waveLink },
     };
