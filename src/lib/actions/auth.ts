@@ -10,14 +10,10 @@ import {
   destroySession,
   getCurrentUser,
   hashPassword,
-  randomToken,
   requireUser,
   revokeAllSessions,
-  sha256,
   verifyPassword,
 } from "@/lib/auth/session";
-import { DEMO_MODE } from "@/lib/config";
-import { getBaseUrl } from "@/lib/url";
 import { isLocale, LOCALE_COOKIE } from "@/lib/i18n/config";
 import { applyLedger, createReferralChain } from "@/lib/services/finance";
 import { audit, ensureSeeded, getWelcomeBonus } from "@/lib/services/system";
@@ -200,32 +196,46 @@ export async function forgotPasswordAction(_prev: ActionState, fd: FormData): Pr
   // Réponse identique que le compte existe ou non (anti-énumération)
   if (!user) return { success: "auth.forgot.sent" };
 
-  const token = randomToken(32);
+  // Invalide les codes précédents encore actifs pour cet utilisateur
+  await db
+    .update(passwordResetTokens)
+    .set({ usedAt: new Date() })
+    .where(and(eq(passwordResetTokens.userId, user.id), isNull(passwordResetTokens.usedAt)));
+
+  const code = String(Math.floor(100000 + Math.random() * 900000));
   await db.insert(passwordResetTokens).values({
     userId: user.id,
-    tokenHash: sha256(token),
-    expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    tokenHash: code,
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000),
   });
-  const link = `${await getBaseUrl()}/reset-password?token=${token}`;
-  // TODO mode réel : envoyer `link` par e-mail via un prestataire (Resend, SES…)
-  console.log(`[password-reset] ${email} -> ${link}`);
-  return { success: "auth.forgot.sent", data: DEMO_MODE ? { link } : undefined };
+  // Pas de service e-mail configuré : le code est consultable dans Admin > Réinitialisations
+  console.log(`[password-reset] ${email} -> code ${code}`);
+  return { success: "auth.forgot.sent" };
 }
 
 export async function resetPasswordAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const token = str(fd, "token");
+  const email = str(fd, "email").toLowerCase();
+  const code = str(fd, "code");
   const password = String(fd.get("password") ?? "");
   const confirm = String(fd.get("confirmPassword") ?? "");
-  if (!token) return { error: "auth.err.invalidToken" };
+  if (!EMAIL_RE.test(email) || !code) return { error: "auth.err.invalidToken" };
   if (password.length < 8) return { error: "auth.err.passwordTooShort" };
   if (password !== confirm) return { error: "auth.err.passwordMismatch" };
+
+  const [user] = await db
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(sql`lower(${profiles.email}) = ${email}`)
+    .limit(1);
+  if (!user) return { error: "auth.err.invalidToken" };
 
   const [row] = await db
     .select()
     .from(passwordResetTokens)
     .where(
       and(
-        eq(passwordResetTokens.tokenHash, sha256(token)),
+        eq(passwordResetTokens.userId, user.id),
+        eq(passwordResetTokens.tokenHash, code),
         gt(passwordResetTokens.expiresAt, new Date()),
         isNull(passwordResetTokens.usedAt),
       ),

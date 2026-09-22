@@ -1,10 +1,11 @@
 import "server-only";
-import { and, asc, desc, eq, gte, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   auditLogs,
   ledgerEntries,
   orders,
+  passwordResetTokens,
   paymentTransactions,
   products,
   profiles,
@@ -250,4 +251,23 @@ export async function listAuditLogs(page: number) {
     db.select({ count }).from(auditLogs),
   ]);
   return paged(rows, total, page);
+}
+
+
+export async function listPendingPasswordResets() {
+  return db
+    .select({
+      id: passwordResetTokens.id,
+      code: passwordResetTokens.tokenHash,
+      expiresAt: passwordResetTokens.expiresAt,
+      createdAt: passwordResetTokens.createdAt,
+      firstName: profiles.firstName,
+      lastName: profiles.lastName,
+      email: profiles.email,
+      userId: profiles.id,
+    })
+    .from(passwordResetTokens)
+    .innerJoin(profiles, eq(profiles.id, passwordResetTokens.userId))
+    .where(and(isNull(passwordResetTokens.usedAt), gt(passwordResetTokens.expiresAt, new Date())))
+    .orderBy(desc(passwordResetTokens.createdAt));
 }

@@ -107,13 +107,8 @@ export function ForgotPasswordForm() {
         <p className="text-sm text-slate-500 mt-1">{t("auth.forgot.subtitle")}</p>
       </div>
       <ActionAlert state={state} />
-      {state?.data?.link && (
-        <Alert tone="warning">
-          <p className="font-semibold">{t("auth.forgot.demoLink")}</p>
-          <a href={state.data.link} className="underline break-all text-emerald-800">
-            {state.data.link}
-          </a>
-        </Alert>
+      {state?.success && (
+        <Alert tone="warning">{t("auth.forgot.askAdmin")}</Alert>
       )}
       <Field label={t("auth.email")} htmlFor="email">
         <Input id="email" name="email" type="email" inputMode="email" required />
@@ -130,20 +125,26 @@ export function ForgotPasswordForm() {
   );
 }
 
-export function ResetPasswordForm({ token }: { token: string }) {
+export function ResetPasswordForm() {
   const { t } = useI18n();
   const [state, action] = useActionState<ActionState, FormData>(resetPasswordAction, null);
   return (
     <form action={action} className="space-y-4">
       <h1 className="text-2xl font-extrabold text-slate-900">{t("auth.reset.title")}</h1>
+      <p className="text-sm text-slate-500 -mt-2">{t("auth.reset.subtitle")}</p>
       <ActionAlert state={state} />
-      <input type="hidden" name="token" value={token} />
       {state?.success ? (
         <Link href="/login" className="block text-center font-semibold text-emerald-700">
           {t("auth.loginButton")} →
         </Link>
       ) : (
         <>
+          <Field label={t("auth.email")} htmlFor="email">
+            <Input id="email" name="email" type="email" inputMode="email" required />
+          </Field>
+          <Field label={t("auth.reset.code")} htmlFor="code">
+            <Input id="code" name="code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" required />
+          </Field>
           <Field label={t("me.newPassword")} htmlFor="password">
             <Input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required />
           </Field>

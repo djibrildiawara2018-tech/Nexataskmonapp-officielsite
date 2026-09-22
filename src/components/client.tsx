@@ -328,6 +328,7 @@ const ADMIN_NAV = [
   { href: "/admin/products", key: "admin.products", icon: "box" },
   { href: "/admin/payments", key: "admin.payments", icon: "card" },
   { href: "/admin/withdrawals", key: "admin.withdrawals", icon: "wallet" },
+  { href: "/admin/password-resets", key: "admin.passwordResets", icon: "lock" },
   { href: "/admin/audit", key: "admin.audit", icon: "list" },
   { href: "/admin/settings", key: "admin.settings", icon: "settings" },
 ] as const;
