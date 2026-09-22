@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { adminConfirmPaymentAction } from "@/lib/actions/admin";
+import { adminCancelPaymentAction, adminConfirmPaymentAction } from "@/lib/actions/admin";
 import { formatDateTime, formatMoney } from "@/lib/i18n/config";
 import { getT } from "@/lib/i18n/server";
 import { listPayments } from "@/lib/queries/admin";
@@ -63,10 +63,17 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                     <td className="px-4 py-2.5 hidden lg:table-cell text-slate-500">{formatDateTime(p.paidAt ?? p.createdAt, locale)}</td>
                     <td className="px-4 py-2.5 text-right">
                       {p.status === "pending" && (
-                        <ConfirmForm action={adminConfirmPaymentAction} confirmMessage={`${t("common.confirm")} ${p.reference} — ${money(p.amount)} ?`}>
-                          <input type="hidden" name="reference" value={p.reference} />
-                          <button className={buttonClass("primary", "sm")}>{t("common.confirm")}</button>
-                        </ConfirmForm>
+                        <div className="flex gap-2 justify-end">
+                          <ConfirmForm action={adminConfirmPaymentAction} confirmMessage={`${t("common.confirm")} ${p.reference} — ${money(p.amount)} ?`}>
+                            <input type="hidden" name="reference" value={p.reference} />
+                            <button className={buttonClass("primary", "sm")}>{t("common.confirm")}</button>
+                          </ConfirmForm>
+                          <ConfirmForm action={adminCancelPaymentAction} confirmMessage={`${t("common.cancel")} ${p.reference} — ${money(p.amount)} ?`}>
+                            <input type="hidden" name="paymentId" value={p.id} />
+                            <input type="hidden" name="userId" value={userId} />
+                            <button className={buttonClass("danger", "sm")}>{t("common.cancel")}</button>
+                          </ConfirmForm>
+                        </div>
                       )}
                     </td>
                   </tr>

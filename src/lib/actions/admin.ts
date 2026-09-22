@@ -11,6 +11,7 @@ import {
   accrueBonuses,
   approveWithdrawal,
   completeWithdrawal,
+  cancelPayment,
   confirmPayment,
   FinanceError,
   rejectWithdrawal,
@@ -177,6 +178,20 @@ export async function adminConfirmPaymentAction(fd: FormData): Promise<void> {
     redirect("/admin/payments?msg=error");
   }
   redirect("/admin/payments?msg=payment_confirmed");
+}
+
+export async function adminCancelPaymentAction(fd: FormData): Promise<void> {
+  const admin = await requireAdmin();
+  const paymentId = str(fd, "paymentId");
+  const userId = str(fd, "userId");
+  try {
+    await cancelPayment(userId, paymentId);
+    await audit(db, { adminId: admin.id, action: "payment.cancel", entityType: "payment", entityId: paymentId });
+  } catch (e) {
+    console.error(e);
+    redirect("/admin/payments?msg=error");
+  }
+  redirect("/admin/payments?msg=payment_cancelled");
 }
 
 /* ------------------------------ Numéros de dépôt (paiements manuels) ------------------------------ */
