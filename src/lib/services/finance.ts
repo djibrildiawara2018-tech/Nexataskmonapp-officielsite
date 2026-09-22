@@ -346,52 +346,66 @@ async function distributeCommissions(
   order: typeof orders.$inferSelect,
 ) {
   const [buyer] = await tx
-    .select({ firstName: profiles.firstName, lastName: profiles.lastName })
+    .select({ firstName: profiles.firstName, lastName: profiles.lastName, referredBy: profiles.referredBy })
     .from(profiles)
     .where(eq(profiles.id, payment.userId))
     .limit(1);
+  if (!buyer?.referredBy) return; // pas de parrain direct : rien à distribuer
   const buyerName = buyer ? `${buyer.firstName} ${buyer.lastName.charAt(0)}.` : "—";
-  const ancestors = await getAncestors(tx, payment.userId, 3);
-  for (const a of ancestors) {
-    if (a.status !== "active") continue;
-    const rate = REFERRAL_RATES[a.level as 1 | 2 | 3];
-    const amount = Math.floor((payment.amount * rate) / 100);
-    if (amount <= 0) continue;
-    const inserted = await tx
-      .insert(referralCommissions)
-      .values({
-        beneficiaryId: a.id,
-        sourceUserId: payment.userId,
-        orderId: order.id,
-        paymentId: payment.id,
-        level: a.level,
-        ratePercent: rate,
-        baseAmount: payment.amount,
-        amount,
-      })
-      .onConflictDoNothing()
-      .returning({ id: referralCommissions.id });
-    if (inserted.length === 0) continue; // déjà versée
-    const applied = await applyLedger(tx, {
-      userId: a.id,
-      type: "commission",
+
+  const [sponsor] = await tx
+    .select({ id: profiles.id, status: profiles.status })
+    .from(profiles)
+    .where(eq(profiles.id, buyer.referredBy))
+    .limit(1);
+  if (!sponsor || sponsor.status !== "active") return;
+
+  // Numéro de cet achat pour l'acheteur : 1er, 2e, 3e paiement confirmé (celui-ci inclus).
+  const [{ paidCount }] = await tx
+    .select({ paidCount: sql<number>`count(*)::int` })
+    .from(paymentTransactions)
+    .where(and(eq(paymentTransactions.userId, payment.userId), eq(paymentTransactions.status, "paid")));
+  const purchaseNumber = Number(paidCount) + 1;
+
+  const rate = REFERRAL_RATES[purchaseNumber as 1 | 2 | 3] ?? 0;
+  if (rate <= 0) return; // au-delà du 3e achat : plus de commission
+  const amount = Math.floor((payment.amount * rate) / 100);
+  if (amount <= 0) return;
+
+  const inserted = await tx
+    .insert(referralCommissions)
+    .values({
+      beneficiaryId: sponsor.id,
+      sourceUserId: payment.userId,
+      orderId: order.id,
+      paymentId: payment.id,
+      level: purchaseNumber,
+      ratePercent: rate,
+      baseAmount: payment.amount,
       amount,
-      effect: "credit",
-      idempotencyKey: `commission:${payment.id}:${a.id}`,
-      referenceType: "commission",
-      referenceId: inserted[0].id,
-      description: `Niveau ${a.level} — ${buyerName}`,
-      counters: { totalCommission: amount },
+    })
+    .onConflictDoNothing()
+    .returning({ id: referralCommissions.id });
+  if (inserted.length === 0) return;
+  const applied = await applyLedger(tx, {
+    userId: sponsor.id,
+    type: "commission",
+    amount,
+    effect: "credit",
+    idempotencyKey: `commission:${payment.id}:${sponsor.id}`,
+    referenceType: "commission",
+    referenceId: inserted[0].id,
+    description: `${purchaseNumber}${purchaseNumber === 1 ? "er" : "e"} achat — ${buyerName}`,
+    counters: { totalCommission: amount },
+  });
+  if (applied) {
+    await notify(tx, {
+      userId: sponsor.id,
+      type: "commission_received",
+      title: "Commission reçue",
+      body: `${amount} FCFA de commission (${purchaseNumber}${purchaseNumber === 1 ? "er" : "e"} achat) grâce à ${buyerName}.`,
+      data: { amount, purchaseNumber, name: buyerName },
     });
-    if (applied) {
-      await notify(tx, {
-        userId: a.id,
-        type: "commission_received",
-        title: "Commission reçue",
-        body: `${amount} FCFA de commission (niveau ${a.level}) grâce à ${buyerName}.`,
-        data: { amount, level: a.level, name: buyerName },
-      });
-    }
   }
 }
 
