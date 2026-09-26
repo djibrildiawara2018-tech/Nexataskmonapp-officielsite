@@ -146,7 +146,7 @@ export async function pickDepositAccount(): Promise<DepositAccount | null> {
     .select()
     .from(depositAccounts)
     .where(eq(depositAccounts.isActive, true))
-    .orderBy(asc(depositAccounts.paymentsReceived), asc(depositAccounts.createdAt))
+    .orderBy(sql`random()`)
     .limit(1);
   return rows[0] ?? null;
 }
