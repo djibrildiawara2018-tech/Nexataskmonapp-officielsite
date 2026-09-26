@@ -193,12 +193,14 @@ export async function listPayments(status: string, q: string, page: number) {
   const conds: SQL[] = [];
   if (["pending", "paid", "failed", "cancelled"].includes(status)) conds.push(eq(paymentTransactions.status, status as PaymentStatus));
   if (q.trim()) {
+    const term = q.trim();
     conds.push(
       or(
-        ilike(paymentTransactions.reference, `%${q.trim()}%`),
-        ilike(profiles.email, `%${q.trim()}%`),
-        ilike(profiles.lastName, `%${q.trim()}%`),
-        ilike(profiles.phone, `%${q.trim()}%`),
+        ilike(paymentTransactions.reference, `%${term}%`),
+        ilike(profiles.email, `%${term}%`),
+        ilike(profiles.lastName, `%${term}%`),
+        ilike(profiles.phone, `%${term}%`),
+        sql`${paymentTransactions.amount}::text ilike ${`%${term}%`}`,
       )!,
     );
   }

@@ -13,7 +13,7 @@ const FILTERS = ["all", "pending", "paid", "failed", "cancelled"] as const;
 
 export default async function AdminPaymentsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
-  const status = sp.status ?? "all";
+  const status = sp.status ?? "pending";
   const q = sp.q ?? "";
   const { t, locale } = await getT();
   const data = await listPayments(status, q, pageOf(sp.page));
