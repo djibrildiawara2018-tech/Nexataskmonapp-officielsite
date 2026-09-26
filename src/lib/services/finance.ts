@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, inArray, isNotNull, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, lt, or, sql } from "drizzle-orm";
 import { db, type DbTx } from "@/db";
 import {
   bonusTransactions,
@@ -516,6 +516,42 @@ export async function resetAllUsersFinances(adminId: string): Promise<void> {
 /* ------------------------------------------------------------------ */
 /* Bonus quotidiens (serveur uniquement, anti double-crédit)            */
 /* ------------------------------------------------------------------ */
+/** Annule automatiquement les paiements restés "pending" plus de 24h (à appeler via cron). */
+export async function expireStalePendingPayments(opts: { limit?: number } = {}): Promise<{ processed: number }> {
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const stale = await db
+    .select({ id: paymentTransactions.id })
+    .from(paymentTransactions)
+    .where(and(eq(paymentTransactions.status, "pending"), lt(paymentTransactions.createdAt, cutoff)))
+    .orderBy(asc(paymentTransactions.createdAt))
+    .limit(opts.limit ?? 500);
+
+  let processed = 0;
+  for (const p of stale) {
+    await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(paymentTransactions)
+        .set({ status: "cancelled", updatedAt: new Date(), metadata: sql`coalesce(${paymentTransactions.metadata}, '{}'::jsonb) || '{"cancelledBy":"cron_expiry"}'::jsonb` })
+        .where(and(eq(paymentTransactions.id, p.id), eq(paymentTransactions.status, "pending")))
+        .returning({ orderId: paymentTransactions.orderId, userId: paymentTransactions.userId, amount: paymentTransactions.amount, reference: paymentTransactions.reference });
+      if (!row) return;
+      await tx
+        .update(orders)
+        .set({ status: "cancelled", updatedAt: new Date() })
+        .where(and(eq(orders.id, row.orderId), eq(orders.status, "pending")));
+      await notify(tx, {
+        userId: row.userId,
+        type: "account_updated",
+        title: "Paiement expiré",
+        body: `Votre paiement en attente de ${row.amount} FCFA (réf. ${row.reference}) a expiré après 24h sans confirmation.`,
+        data: { amount: row.amount, reference: row.reference },
+      });
+      processed += 1;
+    });
+  }
+  return { processed };
+}
+
 export async function accrueBonuses(opts: { userId?: string; limit?: number } = {}) {
   const now = await effectiveNow();
   const conditions = [eq(orders.status, "active"), isNotNull(orders.startedAt)];
